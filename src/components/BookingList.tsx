@@ -1,5 +1,5 @@
 import { Booking } from '../types';
-import { formatDate, parseDate } from '../utils/dateUtils';
+import { parseDate } from '../utils/dateUtils';
 
 interface BookingListProps {
   bookings: Booking[];

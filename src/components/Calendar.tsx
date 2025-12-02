@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Booking } from '../types';
-import { formatDate, getDaysInMonth, getFirstDayOfMonth, isDateInRange, parseDate } from '../utils/dateUtils';
+import { formatDate, getDaysInMonth, getFirstDayOfMonth, isDateInRange } from '../utils/dateUtils';
 
 interface CalendarProps {
   bookings: Booking[];
@@ -28,7 +28,6 @@ const Calendar = ({ bookings, onDateClick, selectedBooking }: CalendarProps) => 
   };
 
   const getBookingForDate = (date: Date): Booking | null => {
-    const dateStr = formatDate(date);
     return bookings.find(b => isDateInRange(date, b.startDate, b.endDate)) || null;
   };
 
