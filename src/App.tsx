@@ -10,8 +10,7 @@ import {
   deleteBooking, 
   saveBookings,
   subscribeToBookings 
-} from './utils/cloudStorage';
-import { isFirebaseConfigured } from './config/firebase';
+} from './utils/githubStorage';
 
 function App() {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -28,14 +27,13 @@ function App() {
       pathname: window.location.pathname,
       origin: window.location.origin,
     });
-    console.log('=== App: 连接云端数据库 ===');
+    console.log('=== App: 连接 GitHub Gist 云端存储 ===');
     
-    // 检查 Firebase 配置状态
-    const configured = isFirebaseConfigured();
-    
-    if (!configured) {
-      console.error('❌ Firebase 未配置！数据无法保存到云端。');
-      setError('⚠️ Firebase 未配置：数据无法保存到云端，换浏览器会看不到数据。请查看 FIREBASE_SETUP.md 配置 Firebase。');
+    // 检查 GitHub Token
+    const token = import.meta.env.VITE_GITHUB_TOKEN;
+    if (!token) {
+      console.error('❌ GitHub Token 未设置！');
+      setError('⚠️ 请设置 GitHub Token。在项目根目录创建 .env 文件，添加：VITE_GITHUB_TOKEN=你的token。查看 GITHUB_SETUP.md 了解如何获取 token。');
       setIsLoading(false);
       return;
     }
