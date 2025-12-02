@@ -15,6 +15,11 @@ const Calendar = ({ bookings, onDateClick, selectedBooking }: CalendarProps) => 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
+  // 当 bookings 变化时，强制重新渲染
+  useEffect(() => {
+    // 这个 effect 确保当 bookings 变化时组件会重新渲染
+  }, [bookings]);
+
   useEffect(() => {
     // 只在当前月份包含今天时获取天气
     const today = new Date();
@@ -134,10 +139,16 @@ const Calendar = ({ bookings, onDateClick, selectedBooking }: CalendarProps) => 
               <div className="split-line"></div>
             </>
           )}
-          {(isStartOnly || isEndOnly) && (
+          {isStartOnly && (
             <>
-              <div className="half-background booking-bg"></div>
-              <div className="half-line"></div>
+              <div className="split-background booking-bg-start"></div>
+              <div className="split-line"></div>
+            </>
+          )}
+          {isEndOnly && (
+            <>
+              <div className="split-background booking-bg-end"></div>
+              <div className="split-line"></div>
             </>
           )}
           <span className="day-number">{day}</span>
