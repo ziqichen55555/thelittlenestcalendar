@@ -53,10 +53,17 @@ base: process.env.NODE_ENV === 'production' ? '/YOUR_REPO_NAME/' : '/',
 
 ### 如果使用自定義域名
 
-如果想使用自定義域名：
+如果想使用自定義域名（例如 `thelittlenest.com`）：
 1. 在 `vite.config.ts` 中將 `base` 改為 `'/'`
-2. 在 GitHub Pages 設置中添加自定義域名
-3. 按照 GitHub 的說明配置 DNS
+2. 在 GitHub Pages 設置中添加**完整的域名**（例如：`thelittlenest.com` 或 `www.thelittlenest.com`）
+   - ⚠️ **注意**：不能只填 `thelittlenest`，必須是完整的域名格式
+3. 按照 GitHub 的說明配置 DNS 記錄
+
+### ⚠️ 自定義域名錯誤
+
+如果看到 "The custom domain `thelittlenest` is not properly formatted" 錯誤：
+- **解決方案**：在 GitHub Pages 設置中**清空自定義域名欄位**，使用默認的 GitHub Pages 地址
+- 或者使用完整的域名格式（如 `thelittlenest.com`）
 
 ## 更新網站
 
