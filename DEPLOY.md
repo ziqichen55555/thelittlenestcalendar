@@ -1,11 +1,17 @@
 # GitHub Pages 部署說明
 
+## ⚠️ 重要提示
+
+**GitHub Pages 對公開倉庫是完全免費的！** 如果你看到升級提示，可能是因為：
+- 倉庫設置為 **Private（私有）** - 私有倉庫的 GitHub Pages 需要付費計劃
+- **解決方案**：將倉庫設置為 **Public（公開）** 即可免費使用
+
 ## 步驟 1: 在 GitHub 創建倉庫
 
 1. 登錄 GitHub
 2. 點擊右上角的 "+" 按鈕，選擇 "New repository"
 3. 倉庫名稱建議使用：`thelittlenestcalendar`（如果使用其他名稱，需要修改 `vite.config.ts` 中的 `base` 路徑）
-4. 選擇 Public（公開）或 Private（私有）
+4. **重要：選擇 Public（公開）** - 這樣才能免費使用 GitHub Pages
 5. **不要**勾選 "Initialize this repository with a README"
 6. 點擊 "Create repository"
 
