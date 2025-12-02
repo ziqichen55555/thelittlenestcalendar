@@ -2,7 +2,7 @@ import { Booking } from '../types';
 
 // Google Apps Script Web App URL
 const WEB_APP_URL = (import.meta as any).env?.VITE_GOOGLE_SCRIPT_URL || 
-  'https://script.google.com/macros/s/AKfycbwP9l0erfmQ7rLU8BH-szu0OQyvGOgAklnq4f6lHcM5tVg5IbewWqO-FFBrzebbN93O/exec';
+  'https://script.google.com/macros/s/AKfycbw6krzeMoNDYgpFu1DBeOAoDoOsbps8MbSpvO-1SUDv9r3YkIATO91hfL1pK94zQPMi/exec';
 
 // 检查配置
 const checkConfig = () => {

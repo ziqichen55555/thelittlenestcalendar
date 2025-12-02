@@ -31,7 +31,7 @@ function App() {
     
     // 检查 Google Script URL
     const scriptUrl = (import.meta as any).env?.VITE_GOOGLE_SCRIPT_URL || 
-      'https://script.google.com/macros/s/AKfycbwP9l0erfmQ7rLU8BH-szu0OQyvGOgAklnq4f6lHcM5tVg5IbewWqO-FFBrzebbN93O/exec';
+      'https://script.google.com/macros/s/AKfycbw6krzeMoNDYgpFu1DBeOAoDoOsbps8MbSpvO-1SUDv9r3YkIATO91hfL1pK94zQPMi/exec';
     
     if (!scriptUrl || scriptUrl.includes('your-script-url')) {
       console.error('❌ Google Script URL 未设置！');
