@@ -9,7 +9,7 @@ import {
   query,
   orderBy
 } from 'firebase/firestore';
-import { db } from '../config/firebase';
+import { db, isFirebaseConfigured } from '../config/firebase';
 import { Booking } from '../types';
 
 const COLLECTION_NAME = 'bookings';
@@ -29,6 +29,12 @@ const docToBooking = (doc: any): Booking => {
 
 // 获取所有预订（一次性）
 export const getBookings = async (): Promise<Booking[]> => {
+  if (!isFirebaseConfigured()) {
+    const error = new Error('Firebase 未配置。请更新 src/config/firebase.ts 文件中的 Firebase 配置。查看 FIREBASE_SETUP.md 了解详细步骤。');
+    console.error('❌', error.message);
+    throw error;
+  }
+  
   try {
     console.log('📡 从云端获取预订数据...');
     const q = query(collection(db, COLLECTION_NAME), orderBy('startDate', 'asc'));
@@ -36,8 +42,13 @@ export const getBookings = async (): Promise<Booking[]> => {
     const bookings = querySnapshot.docs.map(docToBooking);
     console.log('✓ 成功获取', bookings.length, '个预订');
     return bookings;
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ 获取预订失败:', error);
+    if (error.code === 'permission-denied') {
+      throw new Error('Firestore 权限被拒绝。请检查 Firestore 安全规则。');
+    } else if (error.code === 'unavailable') {
+      throw new Error('无法连接到 Firebase。请检查网络连接和 Firebase 配置。');
+    }
     throw error;
   }
 };
@@ -66,6 +77,12 @@ export const subscribeToBookings = (
 
 // 添加预订
 export const addBooking = async (booking: Booking): Promise<void> => {
+  if (!isFirebaseConfigured()) {
+    const error = new Error('Firebase 未配置，无法保存到云端。请更新 src/config/firebase.ts 文件。');
+    console.error('❌', error.message);
+    throw error;
+  }
+  
   try {
     console.log('➕ 添加预订到云端:', booking);
     await addDoc(collection(db, COLLECTION_NAME), {
@@ -75,9 +92,14 @@ export const addBooking = async (booking: Booking): Promise<void> => {
       note: booking.note || '',
       color: booking.color || null,
     });
-    console.log('✓ 预订添加成功');
-  } catch (error) {
+    console.log('✓ 预订添加成功并已保存到云端');
+  } catch (error: any) {
     console.error('❌ 添加预订失败:', error);
+    if (error.code === 'permission-denied') {
+      throw new Error('Firestore 权限被拒绝。请检查 Firestore 安全规则。');
+    } else if (error.code === 'unavailable') {
+      throw new Error('无法连接到 Firebase。请检查网络连接。');
+    }
     throw error;
   }
 };

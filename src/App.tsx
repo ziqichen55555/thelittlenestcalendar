@@ -11,6 +11,7 @@ import {
   saveBookings,
   subscribeToBookings 
 } from './utils/cloudStorage';
+import { isFirebaseConfigured } from './config/firebase';
 
 function App() {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -28,6 +29,16 @@ function App() {
       origin: window.location.origin,
     });
     console.log('=== App: 连接云端数据库 ===');
+    
+    // 检查 Firebase 配置状态
+    const configured = isFirebaseConfigured();
+    
+    if (!configured) {
+      console.error('❌ Firebase 未配置！数据无法保存到云端。');
+      setError('⚠️ Firebase 未配置：数据无法保存到云端，换浏览器会看不到数据。请查看 FIREBASE_SETUP.md 配置 Firebase。');
+      setIsLoading(false);
+      return;
+    }
     
     // 设置实时监听，自动同步云端数据
     const unsubscribe = subscribeToBookings((bookings) => {
@@ -108,9 +119,11 @@ function App() {
       if (editingBooking) {
         await updateBooking(booking.id, booking);
         console.log('✓ 预订更新成功');
+        alert('✓ 预订已更新并保存到云端！');
       } else {
         await addBooking(booking);
         console.log('✓ 预订添加成功');
+        alert('✓ 预订已添加并保存到云端！');
       }
       // 数据会自动通过实时监听更新，不需要手动刷新
       setShowForm(false);
@@ -118,7 +131,9 @@ function App() {
       setSelectedDate('');
     } catch (error) {
       console.error('❌ 保存预订失败:', error);
-      alert('保存失败，请检查网络连接或稍后重试');
+      const errorMessage = error instanceof Error ? error.message : '未知错误';
+      alert(`❌ 保存失败: ${errorMessage}\n\n如果看到 "Firebase 未配置" 错误，请查看 FIREBASE_SETUP.md 文件配置 Firebase。`);
+      setError(errorMessage);
     }
   };
 
