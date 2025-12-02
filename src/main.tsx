@@ -8,6 +8,8 @@ console.log('当前 URL:', window.location.href);
 console.log('Base path:', (import.meta as any).env?.BASE_URL || 'N/A');
 console.log('Mode:', (import.meta as any).env?.MODE || 'N/A');
 console.log('Root element:', document.getElementById('root'));
+console.log('脚本标签:', document.querySelectorAll('script[type="module"]'));
+console.log('所有脚本:', Array.from(document.querySelectorAll('script')).map(s => s.src));
 
 try {
   const root = document.getElementById('root');
