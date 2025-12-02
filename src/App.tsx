@@ -38,7 +38,7 @@ function App() {
     
     // 检查 Google Script URL
     const scriptUrl = (import.meta as any).env?.VITE_GOOGLE_SCRIPT_URL || 
-      'https://script.google.com/macros/s/AKfycbxMZB7n-n6RGxlyBCCrXHM26fHNoHlf9d_M57Iw7tVZU1GQWm-m4BSvctHJeGZn2PAd/exec';
+      'https://script.google.com/macros/s/AKfycbxsJMmHKtlQwn7wqFX3T6xRP96gDM8UdJp5MoZ2Q31_RSlOZTHLTlqoEAkfB8oZecY-Jw/exec';
     
     console.log('📍 Google Script URL:', scriptUrl);
     console.log('📍 URL 是否有效:', !scriptUrl.includes('your-script-url'));
