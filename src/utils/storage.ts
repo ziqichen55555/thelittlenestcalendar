@@ -31,4 +31,3 @@ export const deleteBooking = (id: string): void => {
   const filtered = bookings.filter(b => b.id !== id);
   saveBookings(filtered);
 };
-
