@@ -82,7 +82,10 @@ function App() {
     } else {
       addBooking(booking);
     }
-    setBookings(getBookings());
+    // 立即获取最新数据并更新状态
+    const updatedBookings = getBookings();
+    console.log('保存后的预订数据:', updatedBookings);
+    setBookings([...updatedBookings]); // 使用展开运算符确保创建新数组，触发重新渲染
     setShowForm(false);
     setEditingBooking(null);
     setSelectedDate('');
@@ -97,7 +100,8 @@ function App() {
   const handleDeleteBooking = (id: string) => {
     if (confirm('確定要刪除這個預訂嗎？')) {
       deleteBooking(id);
-      setBookings(getBookings());
+      const updatedBookings = getBookings();
+      setBookings([...updatedBookings]); // 使用展开运算符确保创建新数组
     }
   };
 

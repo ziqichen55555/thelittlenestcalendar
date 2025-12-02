@@ -150,13 +150,13 @@ body {
   box-shadow: none;
 }
 
-.calendar-day.has-booking {
+.calendar-day.has-booking:not(.start-only):not(.end-only):not(.split-day) {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-color: #5568d3;
   color: white;
 }
 
-.calendar-day.special-booking {
+.calendar-day.special-booking:not(.start-only):not(.end-only):not(.split-day) {
   background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
   border-color: #16a34a;
   color: white;
@@ -291,18 +291,18 @@ body {
 .calendar-day.start-only,
 .calendar-day.end-only {
   padding: 0;
-  background: white;
+  background: white !important;
 }
 
 /* 开始日：右下角有颜色（因为接着明天会有颜色） */
 .split-background.booking-bg-start {
-  background: var(--booking-color);
+  background: var(--booking-color) !important;
   clip-path: polygon(100% 0, 100% 100%, 0 100%);
 }
 
 /* 结束日：左上角有颜色（因为接着上一天有颜色） */
 .split-background.booking-bg-end {
-  background: var(--booking-color);
+  background: var(--booking-color) !important;
   clip-path: polygon(0 0, 100% 0, 0 100%);
 }
 

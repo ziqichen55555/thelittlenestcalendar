@@ -88,8 +88,9 @@ const Calendar = ({ bookings, onDateClick, selectedBooking }: CalendarProps) => 
     const days = [];
     
     // 调试：检查 bookings 数据
-    if (bookings.length > 0 && process.env.NODE_ENV === 'development') {
-      console.log('Calendar bookings:', bookings.length, bookings);
+    console.log('渲染日历，预订数量:', bookings.length);
+    if (bookings.length > 0) {
+      console.log('预订数据:', bookings);
     }
     
     // 空白天数
@@ -106,6 +107,11 @@ const Calendar = ({ bookings, onDateClick, selectedBooking }: CalendarProps) => 
       const isStart = booking && booking.startDate === dateStr;
       const isEnd = booking && booking.endDate === dateStr;
       const today = isToday(date);
+      
+      // 调试：检查特定日期
+      if (booking && (day === 3 || day === 6 || day === 7)) {
+        console.log(`日期 ${dateStr}:`, { booking, isStart, isEnd, dateStr });
+      }
 
       // 检查是否是分割日（既是结束又是开始）
       const endingBooking = getEndingBooking(dateStr);
