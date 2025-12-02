@@ -4,5 +4,6 @@ export interface Booking {
   endDate: string; // YYYY-MM-DD
   guests: number;
   note: string;
+  color?: 'green'; // 特殊標記顏色
 }
 

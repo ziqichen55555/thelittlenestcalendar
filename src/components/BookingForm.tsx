@@ -14,6 +14,7 @@ const BookingForm = ({ initialDate, booking, onSave, onCancel, onDelete }: Booki
   const [endDate, setEndDate] = useState(initialDate || '');
   const [guests, setGuests] = useState(1);
   const [note, setNote] = useState('');
+  const [isSpecial, setIsSpecial] = useState(false);
 
   useEffect(() => {
     if (booking) {
@@ -21,9 +22,11 @@ const BookingForm = ({ initialDate, booking, onSave, onCancel, onDelete }: Booki
       setEndDate(booking.endDate);
       setGuests(booking.guests);
       setNote(booking.note);
+      setIsSpecial(booking.color === 'green');
     } else if (initialDate) {
       setStartDate(initialDate);
       setEndDate(initialDate);
+      setIsSpecial(false);
     }
   }, [booking, initialDate]);
 
@@ -51,6 +54,7 @@ const BookingForm = ({ initialDate, booking, onSave, onCancel, onDelete }: Booki
       endDate,
       guests,
       note: note.trim(),
+      color: isSpecial ? 'green' : undefined,
     };
 
     onSave(newBooking);
@@ -97,6 +101,16 @@ const BookingForm = ({ initialDate, booking, onSave, onCancel, onDelete }: Booki
               rows={3}
               placeholder="輸入備註資訊..."
             />
+          </div>
+          <div className="form-group">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={isSpecial}
+                onChange={(e) => setIsSpecial(e.target.checked)}
+              />
+              <span className="checkbox-text">綠色標記（特殊預訂）</span>
+            </label>
           </div>
           <div className="form-actions">
             <button type="submit" className="btn btn-primary">保存</button>

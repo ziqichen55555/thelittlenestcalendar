@@ -36,6 +36,15 @@ const Calendar = ({ bookings, onDateClick, selectedBooking }: CalendarProps) => 
     return isDateInRange(date, selectedBooking.startDate, selectedBooking.endDate);
   };
 
+  const isToday = (date: Date): boolean => {
+    const today = new Date();
+    return (
+      date.getFullYear() === today.getFullYear() &&
+      date.getMonth() === today.getMonth() &&
+      date.getDate() === today.getDate()
+    );
+  };
+
   const renderCalendarDays = () => {
     const days = [];
     
@@ -52,11 +61,12 @@ const Calendar = ({ bookings, onDateClick, selectedBooking }: CalendarProps) => 
       const isSelected = isDateSelected(date);
       const isStart = booking && booking.startDate === dateStr;
       const isEnd = booking && booking.endDate === dateStr;
+      const today = isToday(date);
 
       days.push(
         <div
           key={day}
-          className={`calendar-day ${booking ? 'has-booking' : ''} ${isSelected ? 'selected' : ''} ${isStart ? 'start' : ''} ${isEnd ? 'end' : ''}`}
+          className={`calendar-day ${booking ? 'has-booking' : ''} ${booking?.color === 'green' ? 'special-booking' : ''} ${isSelected ? 'selected' : ''} ${today ? 'today' : ''} ${isStart ? 'start' : ''} ${isEnd ? 'end' : ''}`}
           onClick={() => onDateClick(dateStr)}
           title={booking ? `${booking.guests}人 - ${booking.note || '無備註'}` : ''}
         >

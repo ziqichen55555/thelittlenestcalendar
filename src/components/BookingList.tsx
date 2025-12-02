@@ -30,9 +30,10 @@ const BookingList = ({ bookings, onEdit, onDelete }: BookingListProps) => {
       <h3>預訂列表</h3>
       <div className="bookings">
         {sortedBookings.map(booking => (
-          <div key={booking.id} className="booking-item">
+          <div key={booking.id} className={`booking-item ${booking.color === 'green' ? 'special-booking' : ''}`}>
             <div className="booking-info">
               <div className="booking-dates">
+                {booking.color === 'green' && <span className="special-indicator">🟢</span>}
                 {formatDateDisplay(booking.startDate)} - {formatDateDisplay(booking.endDate)}
               </div>
               <div className="booking-details">

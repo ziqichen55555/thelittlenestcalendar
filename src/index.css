@@ -149,6 +149,26 @@ body {
   color: white;
 }
 
+.calendar-day.special-booking {
+  background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+  border-color: #16a34a;
+  color: white;
+}
+
+.calendar-day.today {
+  border: 3px solid #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.calendar-day.today:not(.has-booking) {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.calendar-day.today.has-booking {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
 .calendar-day.selected {
   background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
   border-color: #f5576c;
@@ -234,6 +254,15 @@ body {
 .booking-item:hover {
   border-color: #667eea;
   box-shadow: 0 4px 8px rgba(102, 126, 234, 0.1);
+}
+
+.booking-item.special-booking {
+  border-left: 4px solid #22c55e;
+}
+
+.special-indicator {
+  margin-right: 6px;
+  font-size: 0.9rem;
 }
 
 .booking-info {
@@ -348,6 +377,25 @@ body {
 
 .form-group textarea {
   resize: vertical;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #22c55e;
+}
+
+.checkbox-text {
+  font-weight: 500;
+  color: #333;
 }
 
 .form-actions {
