@@ -56,7 +56,7 @@ const callPostScript = async (action: string, data: any): Promise<any> => {
     if (error instanceof TypeError) {
       const errorMessage = error.message.toLowerCase();
       if (errorMessage.includes('cors') || errorMessage.includes('preflight') || errorMessage.includes('load failed')) {
-        throw new Error('CORS 错误：Google Apps Script 需要添加 doOptions 函数来处理 CORS 预检请求。\n\n请查看 修复CORS错误.md 文件了解如何修复。\n\n或者，你可以：\n1. 打开 Google Apps Script\n2. 添加 doOptions 函数（见 修复CORS错误.md）\n3. 重新部署 Web App');
+        throw new Error('CORS 错误：POST 请求失败，说明 doOptions 函数可能未正确部署。\n\n📖 立即执行以下步骤：\n1. 打开 Google Apps Script: https://script.google.com/\n2. 确认代码中有 doOptions 函数（在文件顶部）\n3. 点击"部署" → "管理部署" → "编辑"\n4. 在"版本"下拉菜单中选择"新版本"（不要选择"Head"）\n5. 确认"具有访问权限的用户" = "所有人"\n6. 点击"部署"\n7. 等待 10-20 秒后重试\n\n💡 详细步骤请查看：立即执行-复制代码步骤.md 或 紧急修复-CORS405错误.md\n\n🔍 也可以使用测试工具：https://ziqichen55555.github.io/thelittlenestcalendar/测试OPTIONS请求.html');
       }
       if (errorMessage.includes('fetch')) {
         throw new Error('网络请求失败。请检查：\n1. 网络连接是否正常\n2. Google Apps Script Web App URL 是否正确\n3. Web App 是否已正确部署');

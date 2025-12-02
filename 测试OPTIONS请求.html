@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>测试 OPTIONS 请求（CORS 预检）</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      border-bottom: 2px solid #667eea;
+      padding-bottom: 10px;
+    }
+    button {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px 5px;
+    }
+    button:hover {
+      background: #5568d3;
+    }
+    button.success {
+      background: #4CAF50;
+    }
+    button.error {
+      background: #f44336;
+    }
+    pre {
+      background: #2d2d2d;
+      color: #f8f8f2;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+      max-height: 400px;
+      overflow-y: auto;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .status {
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+      font-weight: bold;
+      font-size: 16px;
+    }
+    .status.success {
+      background: #d4edda;
+      color: #155724;
+      border: 2px solid #c3e6cb;
+    }
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 2px solid #f5c6cb;
+    }
+    .status.info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 2px solid #bee5eb;
+    }
+    .instructions {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 4px;
+      padding: 15px;
+      margin: 20px 0;
+    }
+    .instructions h3 {
+      margin-top: 0;
+      color: #856404;
+    }
+    .instructions ol {
+      margin: 10px 0;
+      padding-left: 20px;
+    }
+    .instructions li {
+      margin: 8px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 测试 OPTIONS 请求（CORS 预检）</h1>
+    
+    <div class="instructions">
+      <h3>📋 这个工具的作用</h3>
+      <p>这个工具专门测试 <code>doOptions</code> 函数是否正确部署。如果 OPTIONS 请求失败，说明：</p>
+      <ol>
+        <li><code>doOptions</code> 函数不存在于代码中</li>
+        <li><code>doOptions</code> 函数存在但未正确部署（选择了"Head"而不是"新版本"）</li>
+        <li>Web App 访问权限未设置为"所有人"</li>
+      </ol>
+    </div>
+
+    <div>
+      <p><strong>Web App URL:</strong></p>
+      <code id="url">https://script.google.com/macros/s/AKfycbxMZB7n-n6RGxlyBCCrXHM26fHNoHlf9d_M57Iw7tVZU1GQWm-m4BSvctHJeGZn2PAd/exec</code>
+    </div>
+
+    <div style="margin: 20px 0;">
+      <button onclick="testOptions()">🚀 测试 OPTIONS 请求</button>
+      <button onclick="testPost()">📤 测试 POST 请求</button>
+      <button onclick="testBoth()">🔄 测试两者</button>
+    </div>
+
+    <div id="status" class="status info" style="display: none;"></div>
+    
+    <div>
+      <h2>测试结果</h2>
+      <pre id="result">点击上面的按钮开始测试...</pre>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'https://script.google.com/macros/s/AKfycbxMZB7n-n6RGxlyBCCrXHM26fHNoHlf9d_M57Iw7tVZU1GQWm-m4BSvctHJeGZn2PAd/exec';
+
+    function log(message, type = 'info') {
+      const resultEl = document.getElementById('result');
+      const timestamp = new Date().toLocaleTimeString();
+      const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️';
+      resultEl.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+      resultEl.scrollTop = resultEl.scrollHeight;
+    }
+
+    function setStatus(message, type) {
+      const statusEl = document.getElementById('status');
+      statusEl.className = `status ${type}`;
+      statusEl.textContent = message;
+      statusEl.style.display = 'block';
+    }
+
+    async function testOptions() {
+      document.getElementById('result').textContent = '';
+      log('=== 开始测试 OPTIONS 请求 ===');
+      setStatus('正在测试 OPTIONS 请求...', 'info');
+      
+      try {
+        const startTime = Date.now();
+        log('发送 OPTIONS 请求到: ' + API_URL);
+        
+        const response = await fetch(API_URL, {
+          method: 'OPTIONS',
+        });
+        
+        const duration = Date.now() - startTime;
+        log(`响应状态: ${response.status} ${response.statusText} (耗时: ${duration}ms)`);
+        log(`响应头: ${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}`);
+        
+        if (response.status === 200 || response.status === 204) {
+          setStatus('✅ OPTIONS 请求成功！doOptions 函数已正确部署', 'success');
+          log('✅ CORS 预检请求成功，POST 请求应该可以正常工作', 'success');
+          return { success: true, status: response.status };
+        } else {
+          setStatus(`❌ OPTIONS 请求失败：状态码 ${response.status}`, 'error');
+          log(`❌ 这表示 doOptions 函数可能未正确部署`, 'error');
+          log('💡 解决方案：', 'error');
+          log('   1. 确认 Google Apps Script 代码中有 doOptions 函数', 'error');
+          log('   2. 重新部署 Web App，选择"新版本"（不要选择"Head"）', 'error');
+          log('   3. 确认"具有访问权限的用户"设置为"所有人"', 'error');
+          return { success: false, status: response.status };
+        }
+      } catch (error) {
+        setStatus(`❌ OPTIONS 请求失败：${error.message}`, 'error');
+        log(`错误详情: ${error.toString()}`, 'error');
+        
+        if (error.message.includes('CORS') || error.message.includes('preflight') || error.message.includes('Load failed')) {
+          log('', 'error');
+          log('💡 这是 CORS 错误，说明 doOptions 函数未正确部署', 'error');
+          log('', 'error');
+          log('📖 立即执行以下步骤：', 'error');
+          log('   1. 打开 Google Apps Script: https://script.google.com/', 'error');
+          log('   2. 确认代码中有 doOptions 函数（在文件顶部）', 'error');
+          log('   3. 点击"部署" → "管理部署" → "编辑"', 'error');
+          log('   4. 在"版本"下拉菜单中选择"新版本"', 'error');
+          log('   5. 确认"具有访问权限的用户" = "所有人"', 'error');
+          log('   6. 点击"部署"', 'error');
+          log('   7. 等待 10-20 秒后重新测试', 'error');
+        }
+        
+        return { success: false, error: error.message };
+      }
+    }
+
+    async function testPost() {
+      document.getElementById('result').textContent = '';
+      log('=== 开始测试 POST 请求 ===');
+      setStatus('正在测试 POST 请求...', 'info');
+      
+      const testData = {
+        action: 'add',
+        ID: 'test-options-' + Date.now(),
+        StartDate: '2025-12-03',
+        EndDate: '2025-12-05',
+        GuestsNo: 2,
+        Note: '测试数据 - 可以删除',
+        Color: ''
+      };
+      
+      try {
+        log(`发送 POST 请求，数据: ${JSON.stringify(testData, null, 2)}`);
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(testData)
+        });
+        
+        log(`响应状态: ${response.status} ${response.statusText}`);
+        log(`响应头: ${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}`);
+        
+        const data = await response.json();
+        log(`返回数据: ${JSON.stringify(data, null, 2)}`);
+        
+        if (data.status === 'success') {
+          setStatus('✅ POST 请求成功！', 'success');
+          log('✅ 数据已成功添加到 Google Sheet', 'success');
+          return { success: true, data };
+        } else {
+          setStatus(`❌ POST 请求失败: ${data.error || '未知错误'}`, 'error');
+          return { success: false, error: data.error, data };
+        }
+      } catch (error) {
+        setStatus(`❌ POST 请求失败：${error.message}`, 'error');
+        log(`错误详情: ${error.toString()}`, 'error');
+        
+        if (error.message.includes('CORS') || error.message.includes('preflight') || error.message.includes('Load failed')) {
+          log('', 'error');
+          log('💡 这是 CORS 错误，说明 OPTIONS 预检请求失败', 'error');
+          log('   这通常意味着 doOptions 函数未正确部署', 'error');
+          log('', 'error');
+          log('📖 请先运行"测试 OPTIONS 请求"按钮，确认 doOptions 是否生效', 'error');
+        }
+        
+        return { success: false, error: error.message };
+      }
+    }
+
+    async function testBoth() {
+      document.getElementById('result').textContent = '';
+      log('=== 开始完整测试 ===');
+      setStatus('正在运行完整测试...', 'info');
+      
+      // 先测试 OPTIONS
+      log('\n--- 步骤 1: 测试 OPTIONS 请求 ---');
+      const optionsResult = await testOptions();
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // 再测试 POST
+      log('\n--- 步骤 2: 测试 POST 请求 ---');
+      const postResult = await testPost();
+      
+      // 总结
+      log('\n=== 测试完成 ===');
+      if (optionsResult.success && postResult.success) {
+        setStatus('✅ 所有测试通过！CORS 配置正确', 'success');
+        log('✅ OPTIONS 和 POST 请求都成功', 'success');
+        log('✅ 你的应用应该可以正常添加/更新/删除预订了', 'success');
+      } else if (!optionsResult.success) {
+        setStatus('❌ OPTIONS 请求失败，需要修复 doOptions 函数', 'error');
+        log('❌ OPTIONS 请求失败，这是根本原因', 'error');
+        log('💡 必须先修复 OPTIONS 请求，POST 请求才能正常工作', 'error');
+      } else {
+        setStatus('⚠️ OPTIONS 成功但 POST 失败，可能是其他问题', 'error');
+        log('⚠️ OPTIONS 请求成功，但 POST 请求失败', 'error');
+        log('💡 这可能是 doPost 函数的问题，而不是 CORS 问题', 'error');
+      }
+    }
+
+    // 页面加载时自动运行完整测试
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        testBoth();
+      }, 500);
+    });
+  </script>
+</body>
+</html>
+
