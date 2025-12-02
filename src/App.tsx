@@ -30,6 +30,7 @@ function App() {
     // 设置实时监听，自动同步云端数据
     const unsubscribe = subscribeToBookings((bookings) => {
       console.log('📥 收到云端数据更新:', bookings.length, '个预订');
+      console.log('📊 当前所有预订数据:', bookings);
       setBookings(bookings);
     });
     
@@ -87,6 +88,11 @@ function App() {
             });
         } else {
           console.log('✓ 已有云端数据，数量:', existingBookings.length);
+          console.log('📊 当前所有预订数据:', existingBookings);
+          console.log('📋 预订详情:');
+          existingBookings.forEach((booking, index) => {
+            console.log(`  ${index + 1}. ${booking.startDate} - ${booking.endDate} (${booking.guests}人) - ${booking.note || '无备注'}`);
+          });
         }
       })
       .catch((error) => {
@@ -154,8 +160,15 @@ function App() {
     <div className="app">
       <header className="app-header">
         <h1>🏠 the little nest calendar</h1>
-        <p>fangfang and chris
-        </p>
+        <p>fangfang and chris</p>
+        <div style={{ 
+          marginTop: '10px', 
+          fontSize: '14px', 
+          color: '#666',
+          fontWeight: 'normal' 
+        }}>
+          当前共有 <strong style={{ color: '#667eea' }}>{bookings.length}</strong> 个预订
+        </div>
       </header>
       
       <main className="app-main">
