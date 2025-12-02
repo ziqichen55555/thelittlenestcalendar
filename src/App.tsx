@@ -17,6 +17,8 @@ function App() {
   const [showForm, setShowForm] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     console.log('=== App 组件加载 ===');
@@ -32,60 +34,18 @@ function App() {
       console.log('📥 收到云端数据更新:', bookings.length, '个预订');
       console.log('📊 当前所有预订数据:', bookings);
       setBookings(bookings);
+      setIsLoading(false);
+      setError(null);
     });
     
     // 初始化：检查是否有数据，如果没有则插入初始数据
+    setIsLoading(true);
     getBookings()
       .then((existingBookings) => {
+        setIsLoading(false);
         if (existingBookings.length === 0) {
-          console.log('没有现有数据，插入初始数据');
-          const initialBookings: Booking[] = [
-            {
-              id: '1',
-              startDate: '2025-12-03',
-              endDate: '2025-12-06',
-              guests: 1,
-              note: 'Anthony 一个人 男',
-            },
-            {
-              id: '2',
-              startDate: '2025-12-06',
-              endDate: '2025-12-07',
-              guests: 2,
-              note: 'fangfang 跟另外一个人住',
-              color: 'green',
-            },
-            {
-              id: '3',
-              startDate: '2026-01-11',
-              endDate: '2026-01-23',
-              guests: 1,
-              note: 'auxence',
-            },
-            {
-              id: '4',
-              startDate: '2026-01-26',
-              endDate: '2026-02-09',
-              guests: 1,
-              note: 'Sarah 巴黎',
-            },
-            {
-              id: '5',
-              startDate: '2026-02-10',
-              endDate: '2026-02-11',
-              guests: 2,
-              note: '法国情侣',
-              color: 'green',
-            },
-          ];
-          
-          saveBookings(initialBookings)
-            .then(() => {
-              console.log('✓ 初始数据保存成功');
-            })
-            .catch((error) => {
-              console.error('❌ 保存初始数据失败:', error);
-            });
+          console.log('没有现有数据');
+          setError('数据库为空，请点击"初始化数据"按钮添加初始预订');
         } else {
           console.log('✓ 已有云端数据，数量:', existingBookings.length);
           console.log('📊 当前所有预订数据:', existingBookings);
@@ -93,10 +53,13 @@ function App() {
           existingBookings.forEach((booking, index) => {
             console.log(`  ${index + 1}. ${booking.startDate} - ${booking.endDate} (${booking.guests}人) - ${booking.note || '无备注'}`);
           });
+          setError(null);
         }
       })
       .catch((error) => {
         console.error('❌ 加载云端数据失败:', error);
+        setIsLoading(false);
+        setError(`连接数据库失败: ${error instanceof Error ? error.message : '未知错误'}. 请检查 Firebase 配置。`);
       });
     
     // 清理函数：取消监听
@@ -156,6 +119,67 @@ function App() {
     setSelectedDate('');
   };
 
+  const handleInitializeData = async () => {
+    if (!confirm('確定要初始化數據嗎？這將添加 5 個示例預訂。')) {
+      return;
+    }
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const initialBookings: Booking[] = [
+        {
+          id: '1',
+          startDate: '2025-12-03',
+          endDate: '2025-12-06',
+          guests: 1,
+          note: 'Anthony 一个人 男',
+        },
+        {
+          id: '2',
+          startDate: '2025-12-06',
+          endDate: '2025-12-07',
+          guests: 2,
+          note: 'fangfang 跟另外一个人住',
+          color: 'green',
+        },
+        {
+          id: '3',
+          startDate: '2026-01-11',
+          endDate: '2026-01-23',
+          guests: 1,
+          note: 'auxence',
+        },
+        {
+          id: '4',
+          startDate: '2026-01-26',
+          endDate: '2026-02-09',
+          guests: 1,
+          note: 'Sarah 巴黎',
+        },
+        {
+          id: '5',
+          startDate: '2026-02-10',
+          endDate: '2026-02-11',
+          guests: 2,
+          note: '法国情侣',
+          color: 'green',
+        },
+      ];
+      
+      await saveBookings(initialBookings);
+      console.log('✓ 初始数据保存成功');
+      alert('數據初始化成功！');
+    } catch (error) {
+      console.error('❌ 保存初始数据失败:', error);
+      setError(`初始化失敗: ${error instanceof Error ? error.message : '未知错误'}`);
+      alert('初始化失敗，請檢查 Firebase 配置或網絡連接');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="app">
       <header className="app-header">
@@ -169,6 +193,28 @@ function App() {
         }}>
           当前共有 <strong style={{ color: '#667eea' }}>{bookings.length}</strong> 个预订
         </div>
+        {error && (
+          <div style={{
+            marginTop: '10px',
+            padding: '10px',
+            backgroundColor: '#fee',
+            border: '1px solid #fcc',
+            borderRadius: '4px',
+            fontSize: '13px',
+            color: '#c33'
+          }}>
+            ⚠️ {error}
+          </div>
+        )}
+        {isLoading && (
+          <div style={{
+            marginTop: '10px',
+            fontSize: '13px',
+            color: '#666'
+          }}>
+            🔄 正在加载数据...
+          </div>
+        )}
       </header>
       
       <main className="app-main">
@@ -195,6 +241,16 @@ function App() {
           >
             + 新建預訂
           </button>
+          
+          {bookings.length === 0 && !isLoading && (
+            <button
+              className="btn btn-secondary"
+              onClick={handleInitializeData}
+              style={{ marginTop: '10px', width: '100%' }}
+            >
+              🔄 初始化數據（添加示例預訂）
+            </button>
+          )}
           
           <BookingList
             bookings={bookings}
