@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Booking } from '../types';
 import { formatDate, getDaysInMonth, getFirstDayOfMonth, isDateInRange } from '../utils/dateUtils';
+import { fetchPerthWeather, WeatherData } from '../utils/weather';
 
 interface CalendarProps {
   bookings: Booking[];
@@ -10,8 +11,17 @@ interface CalendarProps {
 
 const Calendar = ({ bookings, onDateClick, selectedBooking }: CalendarProps) => {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [weather, setWeather] = useState<WeatherData | null>(null);
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
+
+  useEffect(() => {
+    // 只在当前月份包含今天时获取天气
+    const today = new Date();
+    if (year === today.getFullYear() && month === today.getMonth()) {
+      fetchPerthWeather().then(setWeather);
+    }
+  }, [year, month]);
 
   const daysInMonth = getDaysInMonth(year, month);
   const firstDay = getFirstDayOfMonth(year, month);
@@ -71,6 +81,12 @@ const Calendar = ({ bookings, onDateClick, selectedBooking }: CalendarProps) => 
           title={booking ? `${booking.guests}人 - ${booking.note || '無備註'}` : ''}
         >
           <span className="day-number">{day}</span>
+          {today && weather && (
+            <div className="weather-info">
+              <span className="weather-icon">{weather.icon}</span>
+              <span className="weather-temp">{weather.temp}</span>
+            </div>
+          )}
           {booking && (
             <div className="booking-indicator">
               <span className="guests-count">{booking.guests}人</span>
