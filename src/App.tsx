@@ -30,7 +30,7 @@ function App() {
     console.log('=== App: 连接 GitHub Gist 云端存储 ===');
     
     // 检查 GitHub Token
-    const token = import.meta.env.VITE_GITHUB_TOKEN;
+    const token = (import.meta as any).env?.VITE_GITHUB_TOKEN;
     if (!token) {
       console.error('❌ GitHub Token 未设置！');
       setError('⚠️ 请设置 GitHub Token。在项目根目录创建 .env 文件，添加：VITE_GITHUB_TOKEN=你的token。查看 GITHUB_SETUP.md 了解如何获取 token。');

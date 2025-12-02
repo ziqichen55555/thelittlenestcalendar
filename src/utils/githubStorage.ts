@@ -2,9 +2,8 @@ import { Booking } from '../types';
 
 // GitHub Gist 配置
 // 使用 GitHub Gist 作为免费云端存储
-const GIST_ID = 'your-gist-id'; // 第一次运行后会自动创建
 const GIST_FILENAME = 'bookings.json';
-const GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN || '';
+const GITHUB_TOKEN = (import.meta as any).env?.VITE_GITHUB_TOKEN || '';
 
 // 获取或创建 Gist
 const getOrCreateGist = async (): Promise<string> => {

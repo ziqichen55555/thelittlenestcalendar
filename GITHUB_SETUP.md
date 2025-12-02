@@ -11,13 +11,20 @@
 
 ### 第 1 步：创建 GitHub Token（1分钟）
 
-1. 访问：https://github.com/settings/tokens
-2. 点击 **"Generate new token"** → **"Generate new token (classic)"**
-3. 输入 Token 名称：`thelittlenestcalendar`（或任何名字）
-4. 选择过期时间：**"No expiration"**（永不过期）
-5. 勾选权限：**`gist`**（只需要这一个权限）
-6. 点击 **"Generate token"**
-7. **重要**：复制生成的 Token（只显示一次！）
+**方法 1：通过设置页面**
+1. 访问：https://github.com/settings/tokens/new
+2. 或者：访问 https://github.com/settings → 左侧菜单找到 **"Developer settings"** → **"Personal access tokens"** → **"Tokens (classic)"** → **"Generate new token"** → **"Generate new token (classic)"**
+
+**方法 2：直接链接**
+1. 直接访问：https://github.com/settings/tokens/new?type=classic
+2. 这会直接打开创建 Token 的页面
+
+**创建 Token：**
+1. 输入 Token 名称：`thelittlenestcalendar`（或任何名字）
+2. 选择过期时间：**"No expiration"**（永不过期）
+3. 勾选权限：**`gist`**（只需要这一个权限，在 "Select scopes" 部分找到）
+4. 滚动到底部，点击 **"Generate token"**
+5. **重要**：复制生成的 Token（只显示一次！格式类似：`ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`）
 
 ### 第 2 步：设置 Token（1分钟）
 
