@@ -12,17 +12,21 @@ function App() {
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
 
   useEffect(() => {
+    console.log('=== App: 加载预订数据 ===');
     // 每次组件加载时都重新获取数据，确保数据是最新的
     const loadBookings = () => {
       const existingBookings = getBookings();
+      console.log('从 localStorage 读取的数据:', existingBookings);
       
       // 如果已有数据，直接加载
       if (existingBookings.length > 0) {
-        setBookings(existingBookings);
+        console.log('使用现有数据，数量:', existingBookings.length);
+        setBookings([...existingBookings]); // 使用展开运算符确保创建新数组
         return;
       }
       
       // 如果没有数据，插入初始数据
+      console.log('没有现有数据，插入初始数据');
       const initialBookings: Booking[] = [
         {
           id: '1',

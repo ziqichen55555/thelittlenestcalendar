@@ -17,8 +17,13 @@ const Calendar = ({ bookings, onDateClick, selectedBooking }: CalendarProps) => 
 
   // 当 bookings 变化时，强制重新渲染
   useEffect(() => {
-    // 这个 effect 确保当 bookings 变化时组件会重新渲染
-    // React 会自动重新渲染，因为 bookings 是 prop
+    console.log('=== Calendar: bookings prop 变化 ===');
+    console.log('bookings 数量:', bookings.length);
+    console.log('bookings 内容:', JSON.stringify(bookings, null, 2));
+    // 强制重新渲染日历
+    // 通过更新 currentDate 的一个副本，触发 Calendar 组件的重新渲染
+    setCurrentDate(new Date(currentDate.getTime()));
+    console.log('已触发重新渲染');
   }, [bookings]);
 
   useEffect(() => {
