@@ -82,7 +82,14 @@ function App() {
       .catch((error) => {
         console.error('❌ 加载云端数据失败:', error);
         setIsLoading(false);
-        setError(`连接数据库失败: ${error instanceof Error ? error.message : '未知错误'}. 请检查 Google Apps Script 配置。`);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        
+        // 如果是 "Sheet not found" 错误，显示更详细的提示
+        if (errorMessage.includes('Sheet not found') || errorMessage.includes('工作表未找到')) {
+          setError(`❌ 工作表未找到\n\n请在 Google Sheet 中创建名为 "thelittlenestbookings" 的工作表。\n\n详细步骤：\n1. 打开 Google Sheet\n2. 点击底部 "+" 创建新工作表\n3. 重命名为 "thelittlenestbookings"\n4. 在第一行添加表头：ID | StartDate | EndDate | GuestsNo | Note | Color`);
+        } else {
+          setError(`连接数据库失败: ${errorMessage}. 请检查 Google Apps Script 配置。`);
+        }
       });
     
     // 清理函数：取消监听
