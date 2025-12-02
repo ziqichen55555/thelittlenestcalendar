@@ -196,7 +196,43 @@ function App() {
             fontSize: '13px',
             color: '#c33'
           }}>
-            ⚠️ {error}
+            <div style={{ whiteSpace: 'pre-line', marginBottom: '10px' }}>
+              ⚠️ {error}
+            </div>
+            <button
+              onClick={async () => {
+                console.log('🔍 开始诊断 Google Sheet...');
+                const diagnosis = await diagnoseGoogleSheet();
+                console.log('📊 诊断结果:', diagnosis);
+                
+                if (diagnosis.success) {
+                  alert(`✅ 诊断成功！\n\n工作表存在：是\n有数据：${diagnosis.hasData ? '是' : '否'}\n记录数：${diagnosis.recordCount}\n\n请刷新页面查看数据。`);
+                  window.location.reload();
+                } else {
+                  let message = `❌ 诊断失败\n\n`;
+                  message += `URL: ${diagnosis.url}\n`;
+                  message += `状态码: ${diagnosis.status}\n`;
+                  if (diagnosis.error) {
+                    message += `错误: ${diagnosis.error}\n`;
+                  }
+                  if (diagnosis.error === 'Sheet not found') {
+                    message += `\n💡 解决方案：\n1. 在 Google Sheet 中创建名为 "thelittlenestbookings" 的工作表\n2. 在第一行添加表头：ID | StartDate | EndDate | GuestsNo | Note | Color`;
+                  }
+                  alert(message);
+                }
+              }}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#667eea',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              🔍 诊断 Google Sheet 连接
+            </button>
           </div>
         )}
         {isLoading && (
