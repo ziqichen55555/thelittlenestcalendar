@@ -10,7 +10,7 @@ import {
   deleteBooking, 
   saveBookings,
   subscribeToBookings 
-} from './utils/githubStorage';
+} from './utils/airtableStorage';
 
 function App() {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -27,13 +27,14 @@ function App() {
       pathname: window.location.pathname,
       origin: window.location.origin,
     });
-    console.log('=== App: 连接 GitHub Gist 云端存储 ===');
+    console.log('=== App: 连接 Airtable 云端存储 ===');
     
-    // 检查 GitHub Token
-    const token = (import.meta as any).env?.VITE_GITHUB_TOKEN;
-    if (!token) {
-      console.error('❌ GitHub Token 未设置！');
-      setError('⚠️ 请设置 GitHub Token。在项目根目录创建 .env 文件，添加：VITE_GITHUB_TOKEN=你的token。查看 GITHUB_SETUP.md 了解如何获取 token。');
+    // 检查 Airtable 配置
+    const baseId = (import.meta as any).env?.VITE_AIRTABLE_BASE_ID;
+    const apiKey = (import.meta as any).env?.VITE_AIRTABLE_API_KEY;
+    if (!baseId || !apiKey) {
+      console.error('❌ Airtable 配置未设置！');
+      setError('⚠️ 请设置 Airtable 配置。在项目根目录创建 .env 文件，添加 VITE_AIRTABLE_BASE_ID 和 VITE_AIRTABLE_API_KEY。查看 AIRTABLE_SETUP.md 了解详细步骤。');
       setIsLoading(false);
       return;
     }
