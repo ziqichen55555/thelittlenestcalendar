@@ -3,7 +3,14 @@ import Calendar from './components/Calendar';
 import BookingForm from './components/BookingForm';
 import BookingList from './components/BookingList';
 import { Booking } from './types';
-import { getBookings, addBooking, updateBooking, deleteBooking, saveBookings } from './utils/storage';
+import { 
+  getBookings, 
+  addBooking, 
+  updateBooking, 
+  deleteBooking, 
+  saveBookings,
+  subscribeToBookings 
+} from './utils/cloudStorage';
 
 function App() {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -18,67 +25,79 @@ function App() {
       pathname: window.location.pathname,
       origin: window.location.origin,
     });
-    console.log('=== App: 加载预订数据 ===');
-    // 每次组件加载时都重新获取数据，确保数据是最新的
-    const loadBookings = () => {
-      const existingBookings = getBookings();
-      console.log('从 localStorage 读取的数据:', existingBookings);
-      
-      // 如果已有数据，直接加载
-      if (existingBookings.length > 0) {
-        console.log('使用现有数据，数量:', existingBookings.length);
-        setBookings([...existingBookings]); // 使用展开运算符确保创建新数组
-        return;
-      }
-      
-      // 如果没有数据，插入初始数据
-      console.log('没有现有数据，插入初始数据');
-      const initialBookings: Booking[] = [
-        {
-          id: '1',
-          startDate: '2025-12-03',
-          endDate: '2025-12-06',
-          guests: 1,
-          note: 'Anthony 一个人 男',
-        },
-        {
-          id: '2',
-          startDate: '2025-12-06',
-          endDate: '2025-12-07',
-          guests: 2,
-          note: 'fangfang 跟另外一个人住',
-          color: 'green',
-        },
-        {
-          id: '3',
-          startDate: '2026-01-11',
-          endDate: '2026-01-23',
-          guests: 1,
-          note: 'auxence',
-        },
-        {
-          id: '4',
-          startDate: '2026-01-26',
-          endDate: '2026-02-09',
-          guests: 1,
-          note: 'Sarah 巴黎',
-        },
-        {
-          id: '5',
-          startDate: '2026-02-10',
-          endDate: '2026-02-11',
-          guests: 2,
-          note: '法国情侣',
-          color: 'green',
-        },
-      ];
-      
-      saveBookings(initialBookings);
-      console.log('保存初始数据，数量:', initialBookings.length);
-      setBookings([...initialBookings]); // 使用展开运算符确保创建新数组
-    };
+    console.log('=== App: 连接云端数据库 ===');
     
-    loadBookings();
+    // 设置实时监听，自动同步云端数据
+    const unsubscribe = subscribeToBookings((bookings) => {
+      console.log('📥 收到云端数据更新:', bookings.length, '个预订');
+      setBookings(bookings);
+    });
+    
+    // 初始化：检查是否有数据，如果没有则插入初始数据
+    getBookings()
+      .then((existingBookings) => {
+        if (existingBookings.length === 0) {
+          console.log('没有现有数据，插入初始数据');
+          const initialBookings: Booking[] = [
+            {
+              id: '1',
+              startDate: '2025-12-03',
+              endDate: '2025-12-06',
+              guests: 1,
+              note: 'Anthony 一个人 男',
+            },
+            {
+              id: '2',
+              startDate: '2025-12-06',
+              endDate: '2025-12-07',
+              guests: 2,
+              note: 'fangfang 跟另外一个人住',
+              color: 'green',
+            },
+            {
+              id: '3',
+              startDate: '2026-01-11',
+              endDate: '2026-01-23',
+              guests: 1,
+              note: 'auxence',
+            },
+            {
+              id: '4',
+              startDate: '2026-01-26',
+              endDate: '2026-02-09',
+              guests: 1,
+              note: 'Sarah 巴黎',
+            },
+            {
+              id: '5',
+              startDate: '2026-02-10',
+              endDate: '2026-02-11',
+              guests: 2,
+              note: '法国情侣',
+              color: 'green',
+            },
+          ];
+          
+          saveBookings(initialBookings)
+            .then(() => {
+              console.log('✓ 初始数据保存成功');
+            })
+            .catch((error) => {
+              console.error('❌ 保存初始数据失败:', error);
+            });
+        } else {
+          console.log('✓ 已有云端数据，数量:', existingBookings.length);
+        }
+      })
+      .catch((error) => {
+        console.error('❌ 加载云端数据失败:', error);
+      });
+    
+    // 清理函数：取消监听
+    return () => {
+      console.log('🔌 断开云端连接');
+      unsubscribe();
+    };
   }, []);
 
   const handleDateClick = (date: string) => {
@@ -87,19 +106,23 @@ function App() {
     setShowForm(true);
   };
 
-  const handleSaveBooking = (booking: Booking) => {
-    if (editingBooking) {
-      updateBooking(booking.id, booking);
-    } else {
-      addBooking(booking);
+  const handleSaveBooking = async (booking: Booking) => {
+    try {
+      if (editingBooking) {
+        await updateBooking(booking.id, booking);
+        console.log('✓ 预订更新成功');
+      } else {
+        await addBooking(booking);
+        console.log('✓ 预订添加成功');
+      }
+      // 数据会自动通过实时监听更新，不需要手动刷新
+      setShowForm(false);
+      setEditingBooking(null);
+      setSelectedDate('');
+    } catch (error) {
+      console.error('❌ 保存预订失败:', error);
+      alert('保存失败，请检查网络连接或稍后重试');
     }
-    // 立即获取最新数据并更新状态
-    const updatedBookings = getBookings();
-    console.log('保存后的预订数据:', updatedBookings);
-    setBookings([...updatedBookings]); // 使用展开运算符确保创建新数组，触发重新渲染
-    setShowForm(false);
-    setEditingBooking(null);
-    setSelectedDate('');
   };
 
   const handleEditBooking = (booking: Booking) => {
@@ -108,11 +131,16 @@ function App() {
     setShowForm(true);
   };
 
-  const handleDeleteBooking = (id: string) => {
+  const handleDeleteBooking = async (id: string) => {
     if (confirm('確定要刪除這個預訂嗎？')) {
-      deleteBooking(id);
-      const updatedBookings = getBookings();
-      setBookings([...updatedBookings]); // 使用展开运算符确保创建新数组
+      try {
+        await deleteBooking(id);
+        console.log('✓ 预订删除成功');
+        // 数据会自动通过实时监听更新
+      } catch (error) {
+        console.error('❌ 删除预订失败:', error);
+        alert('删除失败，请检查网络连接或稍后重试');
+      }
     }
   };
 
