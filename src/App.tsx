@@ -10,7 +10,7 @@ import {
   deleteBooking, 
   saveBookings,
   subscribeToBookings 
-} from './utils/airtableStorage';
+} from './utils/googleSheetsStorage';
 
 function App() {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -27,14 +27,15 @@ function App() {
       pathname: window.location.pathname,
       origin: window.location.origin,
     });
-    console.log('=== App: 连接 Airtable 云端存储 ===');
+    console.log('=== App: 连接 Google Sheets 云端存储 ===');
     
-    // 检查 Airtable 配置
-    const baseId = (import.meta as any).env?.VITE_AIRTABLE_BASE_ID;
-    const apiKey = (import.meta as any).env?.VITE_AIRTABLE_API_KEY;
-    if (!baseId || !apiKey) {
-      console.error('❌ Airtable 配置未设置！');
-      setError('⚠️ 请设置 Airtable 配置。在项目根目录创建 .env 文件，添加 VITE_AIRTABLE_BASE_ID 和 VITE_AIRTABLE_API_KEY。查看 AIRTABLE_SETUP.md 了解详细步骤。');
+    // 检查 Google Script URL
+    const scriptUrl = (import.meta as any).env?.VITE_GOOGLE_SCRIPT_URL || 
+      'https://script.google.com/macros/s/AKfycbwP9l0erfmQ7rLU8BH-szu0OQyvGOgAklnq4f6lHcM5tVg5IbewWqO-FFBrzebbN93O/exec';
+    
+    if (!scriptUrl || scriptUrl.includes('your-script-url')) {
+      console.error('❌ Google Script URL 未设置！');
+      setError('⚠️ 请设置 Google Apps Script Web App URL。在项目根目录创建 .env 文件，添加 VITE_GOOGLE_SCRIPT_URL。查看 GOOGLE_SHEETS_SETUP.md 了解详细步骤。');
       setIsLoading(false);
       return;
     }
