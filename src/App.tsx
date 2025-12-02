@@ -8,7 +8,6 @@ import {
   addBooking, 
   updateBooking, 
   deleteBooking, 
-  saveBookings,
   subscribeToBookings 
 } from './utils/googleSheetsStorage';
 
@@ -52,35 +51,12 @@ function App() {
     // 初始化：检查是否有数据
     setIsLoading(true);
     
-    // 先检查是否有本地存储的数据
-    const checkLocalStorage = () => {
-      try {
-        const stored = localStorage.getItem('room-bookings');
-        if (stored) {
-          const localBookings: Booking[] = JSON.parse(stored);
-          if (localBookings.length > 0) {
-            console.log('📦 发现本地存储数据:', localBookings.length, '个预订');
-            return localBookings;
-          }
-        }
-      } catch (error) {
-        console.error('读取本地存储失败:', error);
-      }
-      return null;
-    };
-    
-    const localBookings = checkLocalStorage();
-    
     getBookings()
       .then((existingBookings) => {
         setIsLoading(false);
         if (existingBookings.length === 0) {
           console.log('没有云端数据');
-          if (localBookings && localBookings.length > 0) {
-            setError(`数据库为空，但发现 ${localBookings.length} 个本地预订。请点击"从本地导入"按钮将数据迁移到云端。`);
-          } else {
-            setError('数据库为空，请点击"初始化数据"按钮添加示例预订');
-          }
+          setError(null); // 没有数据也不显示错误，让用户直接添加
         } else {
           console.log('✓ 已有云端数据，数量:', existingBookings.length);
           console.log('📊 当前所有预订数据:', existingBookings);
@@ -94,11 +70,7 @@ function App() {
       .catch((error) => {
         console.error('❌ 加载云端数据失败:', error);
         setIsLoading(false);
-        if (localBookings && localBookings.length > 0) {
-          setError(`连接数据库失败，但发现 ${localBookings.length} 个本地预订。请点击"从本地导入"按钮将数据迁移到云端。`);
-        } else {
-          setError(`连接数据库失败: ${error instanceof Error ? error.message : '未知错误'}. 请检查 Firebase 配置。`);
-        }
+        setError(`连接数据库失败: ${error instanceof Error ? error.message : '未知错误'}. 请检查 Google Apps Script 配置。`);
       });
     
     // 清理函数：取消监听
@@ -163,102 +135,6 @@ function App() {
   };
 
   // 从 localStorage 导入数据
-  const handleImportFromLocalStorage = async () => {
-    try {
-      const stored = localStorage.getItem('room-bookings');
-      if (!stored) {
-        alert('本地存储中没有找到数据');
-        return;
-      }
-      
-      const localBookings: Booking[] = JSON.parse(stored);
-      if (localBookings.length === 0) {
-        alert('本地存储中没有预订数据');
-        return;
-      }
-      
-      if (!confirm(`找到 ${localBookings.length} 个本地预订，是否导入到云端？`)) {
-        return;
-      }
-      
-      setIsLoading(true);
-      setError(null);
-      
-      await saveBookings(localBookings);
-      console.log('✓ 本地数据导入成功');
-      alert(`成功导入 ${localBookings.length} 个预订到云端！`);
-      
-      // 清除本地存储
-      localStorage.removeItem('room-bookings');
-    } catch (error) {
-      console.error('❌ 导入数据失败:', error);
-      setError(`导入失敗: ${error instanceof Error ? error.message : '未知错误'}`);
-      alert('导入失敗，請檢查網絡連接');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleInitializeData = async () => {
-    if (!confirm('確定要初始化數據嗎？這將添加 5 個示例預訂。')) {
-      return;
-    }
-    
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const initialBookings: Booking[] = [
-        {
-          id: '1',
-          startDate: '2025-12-03',
-          endDate: '2025-12-06',
-          guests: 1,
-          note: 'Anthony 一个人 男',
-        },
-        {
-          id: '2',
-          startDate: '2025-12-06',
-          endDate: '2025-12-07',
-          guests: 2,
-          note: 'fangfang 跟另外一个人住',
-          color: 'green',
-        },
-        {
-          id: '3',
-          startDate: '2026-01-11',
-          endDate: '2026-01-23',
-          guests: 1,
-          note: 'auxence',
-        },
-        {
-          id: '4',
-          startDate: '2026-01-26',
-          endDate: '2026-02-09',
-          guests: 1,
-          note: 'Sarah 巴黎',
-        },
-        {
-          id: '5',
-          startDate: '2026-02-10',
-          endDate: '2026-02-11',
-          guests: 2,
-          note: '法国情侣',
-          color: 'green',
-        },
-      ];
-      
-      await saveBookings(initialBookings);
-      console.log('✓ 初始数据保存成功');
-      alert('數據初始化成功！');
-    } catch (error) {
-      console.error('❌ 保存初始数据失败:', error);
-      setError(`初始化失敗: ${error instanceof Error ? error.message : '未知错误'}`);
-      alert('初始化失敗，請檢查 Firebase 配置或網絡連接');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   return (
     <div className="app">
@@ -321,41 +197,6 @@ function App() {
           >
             + 新建預訂
           </button>
-          
-          {bookings.length === 0 && !isLoading && (
-            <>
-              {(() => {
-                try {
-                  const stored = localStorage.getItem('room-bookings');
-                  if (stored) {
-                    const localBookings: Booking[] = JSON.parse(stored);
-                    if (localBookings.length > 0) {
-                      return (
-                        <button
-                          className="btn btn-secondary"
-                          onClick={handleImportFromLocalStorage}
-                          style={{ marginTop: '10px', width: '100%', backgroundColor: '#22c55e' }}
-                        >
-                          📥 从本地导入 ({localBookings.length} 个预订)
-                        </button>
-                      );
-                    }
-                  }
-                } catch (e) {
-                  // 忽略错误
-                }
-                return (
-                  <button
-                    className="btn btn-secondary"
-                    onClick={handleInitializeData}
-                    style={{ marginTop: '10px', width: '100%' }}
-                  >
-                    🔄 初始化數據（添加示例預訂）
-                  </button>
-                );
-              })()}
-            </>
-          )}
           
           <BookingList
             bookings={bookings}
