@@ -37,22 +37,39 @@ const SyncPanel = ({ bookings, onImport }: SyncPanelProps) => {
   };
 
   const handleCopyLink = () => {
-    const json = exportBookings(bookings);
-    const base64 = btoa(unescape(encodeURIComponent(json)));
-    const url = `${window.location.origin}${window.location.pathname}?data=${base64}`;
-    
-    navigator.clipboard.writeText(url).then(() => {
-      alert('鏈接已複製到剪貼板！\n\n在其他設備上打開這個鏈接即可同步數據。');
-    }).catch(() => {
-      // 备用方案
-      const textarea = document.createElement('textarea');
-      textarea.value = url;
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-      alert('鏈接已複製到剪貼板！\n\n在其他設備上打開這個鏈接即可同步數據。');
-    });
+    try {
+      const json = exportBookings(bookings);
+      // 检查数据大小，如果太大则提示使用导出文件
+      if (json.length > 50000) {
+        alert('數據太大，無法使用鏈接同步。請使用「導出數據」功能，然後在另一設備上「導入數據」。');
+        return;
+      }
+      
+      const base64 = btoa(unescape(encodeURIComponent(json)));
+      const url = `${window.location.origin}${window.location.pathname}?data=${base64}`;
+      
+      navigator.clipboard.writeText(url).then(() => {
+        alert('鏈接已複製到剪貼板！\n\n在其他設備上打開這個鏈接即可同步數據。');
+      }).catch(() => {
+        // 备用方案
+        try {
+          const textarea = document.createElement('textarea');
+          textarea.value = url;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textarea);
+          alert('鏈接已複製到剪貼板！\n\n在其他設備上打開這個鏈接即可同步數據。');
+        } catch (err) {
+          alert('複製失敗，請手動複製以下鏈接：\n\n' + url);
+        }
+      });
+    } catch (error) {
+      console.error('生成同步鏈接失敗:', error);
+      alert('生成同步鏈接失敗，請使用「導出數據」功能。');
+    }
   };
 
   return (

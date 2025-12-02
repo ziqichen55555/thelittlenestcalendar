@@ -14,27 +14,37 @@ function App() {
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
 
   useEffect(() => {
-    // 检查 URL 参数中是否有数据（用于跨设备同步）
-    const urlParams = new URLSearchParams(window.location.search);
-    const dataParam = urlParams.get('data');
-    if (dataParam) {
+    // 先加载本地数据，确保页面能正常显示
+    setBookings(getBookings());
+    
+    // 然后检查 URL 参数中是否有数据（用于跨设备同步）
+    // 使用 setTimeout 确保页面先渲染
+    setTimeout(() => {
       try {
-        const json = decodeURIComponent(atob(dataParam));
-        const importedBookings = importBookings(json);
-        if (importedBookings) {
-          if (confirm(`檢測到同步數據，是否導入 ${importedBookings.length} 個預訂？`)) {
-            saveBookings(importedBookings);
-            setBookings(importedBookings);
-            // 清除 URL 参数
+        const urlParams = new URLSearchParams(window.location.search);
+        const dataParam = urlParams.get('data');
+        if (dataParam && dataParam.length > 0) {
+          try {
+            const json = decodeURIComponent(atob(dataParam));
+            const importedBookings = importBookings(json);
+            if (importedBookings && importedBookings.length > 0) {
+              if (confirm(`檢測到同步數據，是否導入 ${importedBookings.length} 個預訂？`)) {
+                saveBookings(importedBookings);
+                setBookings(importedBookings);
+              }
+              // 清除 URL 参数
+              window.history.replaceState({}, '', window.location.pathname);
+            }
+          } catch (error) {
+            console.error('URL 數據解析失敗:', error);
+            // 即使解析失败，也清除 URL 参数，避免重复尝试
             window.history.replaceState({}, '', window.location.pathname);
           }
         }
       } catch (error) {
-        console.error('URL 數據解析失敗:', error);
+        console.error('URL 參數處理失敗:', error);
       }
-    } else {
-      setBookings(getBookings());
-    }
+    }, 100);
   }, []);
 
   const handleDateClick = (date: string) => {
