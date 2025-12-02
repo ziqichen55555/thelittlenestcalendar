@@ -12,34 +12,66 @@ export const fetchPerthWeather = async (): Promise<WeatherData | null> => {
     // 检查缓存
     const cached = localStorage.getItem(WEATHER_CACHE_KEY);
     if (cached) {
-      const { data, timestamp } = JSON.parse(cached);
-      if (Date.now() - timestamp < CACHE_DURATION) {
-        return data;
+      try {
+        const { data, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < CACHE_DURATION) {
+          return data;
+        }
+      } catch (e) {
+        // 缓存损坏，清除
+        localStorage.removeItem(WEATHER_CACHE_KEY);
       }
     }
 
     // 使用 wttr.in API（免费，无需 API key）
-    const response = await fetch('https://wttr.in/Perth?format=j1&lang=zh');
-    if (!response.ok) {
-      throw new Error('天气数据获取失败');
+    // 添加超时和错误处理
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒超时
+
+    try {
+      const response = await fetch('https://wttr.in/Perth?format=j1&lang=zh', {
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (!data.current_condition || !data.current_condition[0]) {
+        throw new Error('天气数据格式错误');
+      }
+
+      const current = data.current_condition[0];
+      
+      const weatherData: WeatherData = {
+        temp: current.temp_C + '°C',
+        condition: current.lang_zh?.[0]?.value || current.weatherDesc?.[0]?.value || '未知',
+        icon: getWeatherIcon(current.weatherCode),
+      };
+
+      // 保存到缓存
+      localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify({
+        data: weatherData,
+        timestamp: Date.now(),
+      }));
+
+      return weatherData;
+    } catch (fetchError: any) {
+      clearTimeout(timeoutId);
+      if (fetchError.name === 'AbortError') {
+        console.error('天气请求超时');
+      } else {
+        console.error('获取天气失败:', fetchError);
+      }
+      return null;
     }
-
-    const data = await response.json();
-    const current = data.current_condition[0];
-    
-    const weatherData: WeatherData = {
-      temp: current.temp_C + '°C',
-      condition: current.lang_zh[0]?.value || current.weatherDesc[0]?.value || '未知',
-      icon: getWeatherIcon(current.weatherCode),
-    };
-
-    // 保存到缓存
-    localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify({
-      data: weatherData,
-      timestamp: Date.now(),
-    }));
-
-    return weatherData;
   } catch (error) {
     console.error('获取天气失败:', error);
     return null;

@@ -19,7 +19,20 @@ const Calendar = ({ bookings, onDateClick, selectedBooking }: CalendarProps) => 
     // 只在当前月份包含今天时获取天气
     const today = new Date();
     if (year === today.getFullYear() && month === today.getMonth()) {
-      fetchPerthWeather().then(setWeather);
+      fetchPerthWeather()
+        .then((data) => {
+          if (data) {
+            setWeather(data);
+          } else {
+            // 如果获取失败，设置一个默认值用于调试
+            console.log('天气数据获取失败，请检查网络或 CORS 设置');
+          }
+        })
+        .catch((error) => {
+          console.error('天气获取错误:', error);
+        });
+    } else {
+      setWeather(null);
     }
   }, [year, month]);
 
@@ -81,10 +94,16 @@ const Calendar = ({ bookings, onDateClick, selectedBooking }: CalendarProps) => 
           title={booking ? `${booking.guests}人 - ${booking.note || '無備註'}` : ''}
         >
           <span className="day-number">{day}</span>
-          {today && weather && (
+          {today && (
             <div className="weather-info">
-              <span className="weather-icon">{weather.icon}</span>
-              <span className="weather-temp">{weather.temp}</span>
+              {weather ? (
+                <>
+                  <span className="weather-icon">{weather.icon}</span>
+                  <span className="weather-temp">{weather.temp}</span>
+                </>
+              ) : (
+                <span className="weather-placeholder">Perth</span>
+              )}
             </div>
           )}
           {booking && (

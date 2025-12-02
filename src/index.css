@@ -208,6 +208,13 @@ body {
   color: inherit;
 }
 
+.weather-placeholder {
+  font-size: 0.65rem;
+  font-weight: 500;
+  opacity: 0.8;
+  color: inherit;
+}
+
 .booking-indicator {
   margin-top: 4px;
   font-size: 0.7rem;
