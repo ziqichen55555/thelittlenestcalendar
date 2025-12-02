@@ -18,6 +18,7 @@ const Calendar = ({ bookings, onDateClick, selectedBooking }: CalendarProps) => 
   // 当 bookings 变化时，强制重新渲染
   useEffect(() => {
     // 这个 effect 确保当 bookings 变化时组件会重新渲染
+    // React 会自动重新渲染，因为 bookings 是 prop
   }, [bookings]);
 
   useEffect(() => {
@@ -85,6 +86,11 @@ const Calendar = ({ bookings, onDateClick, selectedBooking }: CalendarProps) => 
 
   const renderCalendarDays = () => {
     const days = [];
+    
+    // 调试：检查 bookings 数据
+    if (bookings.length > 0 && process.env.NODE_ENV === 'development') {
+      console.log('Calendar bookings:', bookings.length, bookings);
+    }
     
     // 空白天数
     for (let i = 0; i < firstDay; i++) {
@@ -188,7 +194,7 @@ const Calendar = ({ bookings, onDateClick, selectedBooking }: CalendarProps) => 
           <div key={day} className="weekday">{day}</div>
         ))}
       </div>
-      <div className="calendar-days">
+      <div className="calendar-days" key={`calendar-${bookings.length}-${year}-${month}`}>
         {renderCalendarDays()}
       </div>
     </div>

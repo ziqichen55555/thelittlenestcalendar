@@ -12,57 +12,62 @@ function App() {
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
 
   useEffect(() => {
-    const existingBookings = getBookings();
+    // 每次组件加载时都重新获取数据，确保数据是最新的
+    const loadBookings = () => {
+      const existingBookings = getBookings();
+      
+      // 如果已有数据，直接加载
+      if (existingBookings.length > 0) {
+        setBookings(existingBookings);
+        return;
+      }
+      
+      // 如果没有数据，插入初始数据
+      const initialBookings: Booking[] = [
+        {
+          id: '1',
+          startDate: '2024-12-03',
+          endDate: '2024-12-06',
+          guests: 1,
+          note: 'Anthony 一个人 男',
+        },
+        {
+          id: '2',
+          startDate: '2024-12-06',
+          endDate: '2024-12-07',
+          guests: 2,
+          note: 'fangfang 跟另外一个人住',
+          color: 'green',
+        },
+        {
+          id: '3',
+          startDate: '2025-01-11',
+          endDate: '2025-01-23',
+          guests: 1,
+          note: 'auxence',
+        },
+        {
+          id: '4',
+          startDate: '2025-01-26',
+          endDate: '2025-02-09',
+          guests: 1,
+          note: 'Sarah 巴黎',
+        },
+        {
+          id: '5',
+          startDate: '2025-02-10',
+          endDate: '2025-02-11',
+          guests: 2,
+          note: '法国情侣',
+          color: 'green',
+        },
+      ];
+      
+      saveBookings(initialBookings);
+      setBookings(initialBookings);
+    };
     
-    // 如果已有数据，直接加载
-    if (existingBookings.length > 0) {
-      setBookings(existingBookings);
-      return;
-    }
-    
-    // 如果没有数据，插入初始数据
-    const initialBookings: Booking[] = [
-      {
-        id: '1',
-        startDate: '2024-12-03',
-        endDate: '2024-12-06',
-        guests: 1,
-        note: 'Anthony 一个人 男',
-      },
-      {
-        id: '2',
-        startDate: '2024-12-06',
-        endDate: '2024-12-07',
-        guests: 2,
-        note: 'fangfang 跟另外一个人住',
-        color: 'green',
-      },
-      {
-        id: '3',
-        startDate: '2025-01-11',
-        endDate: '2025-01-23',
-        guests: 1,
-        note: 'auxence',
-      },
-      {
-        id: '4',
-        startDate: '2025-01-26',
-        endDate: '2025-02-09',
-        guests: 1,
-        note: 'Sarah 巴黎',
-      },
-      {
-        id: '5',
-        startDate: '2025-02-10',
-        endDate: '2025-02-11',
-        guests: 2,
-        note: '法国情侣',
-        color: 'green',
-      },
-    ];
-    
-    saveBookings(initialBookings);
-    setBookings(initialBookings);
+    loadBookings();
   }, []);
 
   const handleDateClick = (date: string) => {
