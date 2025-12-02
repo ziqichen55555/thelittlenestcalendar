@@ -16,28 +16,43 @@ const callPostScript = async (action: string, data: any): Promise<any> => {
   checkConfig();
   
   try {
-    console.log(`🚀 调用 Google Script doPost (action: ${action})`, data);
+    const requestBody = { action, ...data };
+    console.log(`🚀 调用 Google Script doPost (action: ${action})`, requestBody);
+    
     const response = await fetch(WEB_APP_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ action, ...data }), // 包含 action 和数据
+      body: JSON.stringify(requestBody),
     });
 
     console.log('doPost 响应状态:', response.status, response.statusText);
+    console.log('doPost 响应头:', Object.fromEntries(response.headers.entries()));
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => '无法读取错误信息');
       console.error('doPost 响应错误:', errorText);
-      throw new Error(`操作失败: ${response.status} ${response.statusText}`);
+      throw new Error(`操作失败: ${response.status} ${response.statusText} - ${errorText}`);
     }
 
-    const result = await response.json().catch(() => ({ status: 'success' })); // 尝试解析 JSON，否则返回成功
-    console.log('doPost 响应数据:', result);
-    return result;
+    // 尝试解析 JSON 响应
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      const result = await response.json();
+      console.log('doPost 响应数据:', result);
+      return result;
+    } else {
+      // 如果不是 JSON，尝试读取文本
+      const text = await response.text();
+      console.log('doPost 响应文本:', text);
+      return { status: 'success', message: text };
+    }
   } catch (error) {
     console.error('❌ 调用 Google Script doPost 失败:', error);
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('网络请求失败。请检查：\n1. 网络连接是否正常\n2. Google Apps Script Web App URL 是否正确\n3. Web App 是否已正确部署');
+    }
     throw error;
   }
 };
@@ -151,7 +166,9 @@ export const deleteBooking = async (id: string): Promise<void> => {
   try {
     console.log('🗑️ 从 Google Sheets 删除预订:', id);
     
-    await callPostScript('delete', { ID: id }); // 传递 ID
+    // 根据推荐的脚本，delete action 期望 data.id（小写）
+    // 同时传递 id 和 ID 以兼容不同格式
+    await callPostScript('delete', { id: id, ID: id });
     
     // 等待一下确保数据已保存
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -159,6 +176,13 @@ export const deleteBooking = async (id: string): Promise<void> => {
     console.log('✓ 预订删除成功');
   } catch (error) {
     console.error('❌ 删除预订失败:', error);
+    const errorMessage = error instanceof Error ? error.message : '未知错误';
+    
+    // 提供更详细的错误信息
+    if (errorMessage.includes('Load failed') || errorMessage.includes('Failed to fetch')) {
+      throw new Error('网络连接失败。请检查：\n1. 网络连接是否正常\n2. Google Apps Script 是否支持 delete action\n3. 查看浏览器控制台获取详细错误信息');
+    }
+    
     throw error;
   }
 };

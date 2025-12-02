@@ -127,10 +127,20 @@ function App() {
       try {
         await deleteBooking(id);
         console.log('✓ 预订删除成功');
+        alert('✓ 预订已删除！');
         // 数据会自动通过实时监听更新
       } catch (error) {
         console.error('❌ 删除预订失败:', error);
-        alert('删除失败，请检查网络连接或稍后重试');
+        const errorMessage = error instanceof Error ? error.message : '未知错误';
+        
+        // 提供更友好的错误提示
+        let userMessage = `❌ 删除失败: ${errorMessage}`;
+        if (errorMessage.includes('网络连接失败') || errorMessage.includes('Load failed') || errorMessage.includes('Failed to fetch')) {
+          userMessage += '\n\n可能的原因：\n1. 网络连接问题\n2. Google Apps Script 不支持 delete action\n3. 请检查浏览器控制台的详细错误信息\n\n解决方案：\n- 确保 Google Apps Script 已更新为支持 delete action（查看 更新GoogleScript.md）\n- 检查网络连接\n- 查看浏览器控制台获取详细错误';
+        }
+        
+        alert(userMessage);
+        setError(errorMessage);
       }
     }
   };
