@@ -50,9 +50,18 @@ const callPostScript = async (action: string, data: any): Promise<any> => {
     }
   } catch (error) {
     console.error('❌ 调用 Google Script doPost 失败:', error);
-    if (error instanceof TypeError && error.message.includes('fetch')) {
-      throw new Error('网络请求失败。请检查：\n1. 网络连接是否正常\n2. Google Apps Script Web App URL 是否正确\n3. Web App 是否已正确部署');
+    
+    // 检查是否是 CORS 错误
+    if (error instanceof TypeError) {
+      const errorMessage = error.message.toLowerCase();
+      if (errorMessage.includes('cors') || errorMessage.includes('preflight') || errorMessage.includes('load failed')) {
+        throw new Error('CORS 错误：Google Apps Script 需要添加 doOptions 函数来处理 CORS 预检请求。\n\n请查看 修复CORS错误.md 文件了解如何修复。\n\n或者，你可以：\n1. 打开 Google Apps Script\n2. 添加 doOptions 函数（见 修复CORS错误.md）\n3. 重新部署 Web App');
+      }
+      if (errorMessage.includes('fetch')) {
+        throw new Error('网络请求失败。请检查：\n1. 网络连接是否正常\n2. Google Apps Script Web App URL 是否正确\n3. Web App 是否已正确部署');
+      }
     }
+    
     throw error;
   }
 };
