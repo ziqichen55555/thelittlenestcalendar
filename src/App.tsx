@@ -20,17 +20,28 @@ function App() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log('=== App 组件加载 ===');
-    console.log('当前环境:', {
+    console.log('=== 📱 App 组件加载 ===');
+    console.log('📍 当前环境:', {
       href: window.location.href,
       pathname: window.location.pathname,
       origin: window.location.origin,
+      hostname: window.location.hostname,
+      protocol: window.location.protocol,
     });
-    console.log('=== App: 连接 Google Sheets 云端存储 ===');
+    console.log('📍 环境变量:', {
+      BASE_URL: (import.meta as any).env?.BASE_URL,
+      MODE: (import.meta as any).env?.MODE,
+      PROD: (import.meta as any).env?.PROD,
+      DEV: (import.meta as any).env?.DEV,
+    });
+    console.log('=== 📡 App: 连接 Google Sheets 云端存储 ===');
     
     // 检查 Google Script URL
     const scriptUrl = (import.meta as any).env?.VITE_GOOGLE_SCRIPT_URL || 
       'https://script.google.com/macros/s/AKfycbw6krzeMoNDYgpFu1DBeOAoDoOsbps8MbSpvO-1SUDv9r3YkIATO91hfL1pK94zQPMi/exec';
+    
+    console.log('📍 Google Script URL:', scriptUrl);
+    console.log('📍 URL 是否有效:', !scriptUrl.includes('your-script-url'));
     
     if (!scriptUrl || scriptUrl.includes('your-script-url')) {
       console.error('❌ Google Script URL 未设置！');

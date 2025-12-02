@@ -4,10 +4,28 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>the little nest calendar</title>
+    <script>
+      // 立即记录页面加载信息
+      console.log('=== 📄 HTML 页面加载 ===');
+      console.log('📍 页面 URL:', window.location.href);
+      console.log('📍 页面路径:', window.location.pathname);
+      console.log('📍 文档就绪状态:', document.readyState);
+      console.log('📍 Root 元素存在?', !!document.getElementById('root'));
+      console.log('📍 所有脚本标签数量:', document.querySelectorAll('script').length);
+      console.log('📍 当前时间:', new Date().toISOString());
+    </script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // 页面加载后的检查
+      window.addEventListener('DOMContentLoaded', () => {
+        console.log('=== 📄 DOMContentLoaded 事件 ===');
+        console.log('📍 Root 元素:', document.getElementById('root'));
+        console.log('📍 所有脚本:', Array.from(document.querySelectorAll('script')).map(s => s.src || s.textContent?.substring(0, 50)));
+      });
+    </script>
   </body>
 </html>
 
