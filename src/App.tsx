@@ -104,7 +104,14 @@ function App() {
     } catch (error) {
       console.error('❌ 保存预订失败:', error);
       const errorMessage = error instanceof Error ? error.message : '未知错误';
-      alert(`❌ 保存失败: ${errorMessage}\n\n如果看到 "Firebase 未配置" 错误，请查看 FIREBASE_SETUP.md 文件配置 Firebase。`);
+      
+      // 提供更友好的错误提示
+      let userMessage = `❌ 保存失败: ${errorMessage}`;
+      if (errorMessage.includes('Load failed') || errorMessage.includes('Failed to fetch')) {
+        userMessage += '\n\n可能的原因：\n1. 网络连接问题\n2. Google Apps Script 配置问题\n3. CORS 权限问题\n\n请检查：\n- 网络连接是否正常\n- Google Apps Script Web App 是否已正确部署\n- Web App 的访问权限是否设置为"所有人"';
+      }
+      
+      alert(userMessage);
       setError(errorMessage);
     }
   };

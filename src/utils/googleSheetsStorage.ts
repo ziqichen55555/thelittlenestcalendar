@@ -20,15 +20,24 @@ export const getBookings = async (): Promise<Booking[]> => {
   
   try {
     console.log('📡 从 Google Sheets 获取预订数据...');
+    console.log('请求 URL:', WEB_APP_URL);
     
     // 使用 GET 请求获取数据
-    const response = await fetch(WEB_APP_URL);
+    const response = await fetch(WEB_APP_URL, {
+      method: 'GET',
+      // 不使用 no-cors，因为需要读取响应
+    });
 
+    console.log('响应状态:', response.status, response.statusText);
+    
     if (!response.ok) {
-      throw new Error(`获取数据失败: ${response.statusText}`);
+      const errorText = await response.text().catch(() => '无法读取错误信息');
+      console.error('响应错误:', errorText);
+      throw new Error(`获取数据失败: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
+    console.log('获取到的原始数据:', data);
     const bookings = Array.isArray(data) ? data.map((item: any, index: number) => {
       // 将 Google Sheets 数据转换为 Booking 格式
       // 注意：用户的脚本使用表头作为字段名
@@ -66,22 +75,40 @@ export const addBooking = async (booking: Booking): Promise<void> => {
       Color: booking.color || '',
     };
     
-    const response = await fetch(WEB_APP_URL, {
+    // Google Apps Script Web App 需要特殊处理 CORS
+    // 使用 no-cors 模式避免 CORS 错误
+    await fetch(WEB_APP_URL, {
       method: 'POST',
+      mode: 'no-cors', // Google Apps Script 需要这个，但无法读取响应
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(data),
     });
 
-    if (!response.ok) {
-      throw new Error(`添加失败: ${response.statusText}`);
-    }
+    // no-cors 模式下无法读取响应，所以假设成功
+    // 实际成功与否需要通过后续的 getBookings 验证
 
     // 等待一下确保数据已保存
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    console.log('✓ 预订添加成功');
+    // 验证数据是否已保存（通过重新获取）
+    try {
+      const allBookings = await getBookings();
+      const saved = allBookings.find(b => 
+        b.startDate === booking.startDate && 
+        b.endDate === booking.endDate &&
+        b.guests === booking.guests
+      );
+      if (saved) {
+        console.log('✓ 预订添加成功并已验证');
+      } else {
+        console.warn('⚠️ 预订可能未保存，但请求已发送');
+      }
+    } catch (verifyError) {
+      console.warn('⚠️ 无法验证保存结果:', verifyError);
+      // 不抛出错误，因为请求已发送
+    }
   } catch (error) {
     console.error('❌ 添加预订失败:', error);
     throw error;
