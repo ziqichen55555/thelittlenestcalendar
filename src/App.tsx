@@ -12,6 +12,12 @@ function App() {
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
 
   useEffect(() => {
+    console.log('=== App 组件加载 ===');
+    console.log('当前环境:', {
+      href: window.location.href,
+      pathname: window.location.pathname,
+      origin: window.location.origin,
+    });
     console.log('=== App: 加载预订数据 ===');
     // 每次组件加载时都重新获取数据，确保数据是最新的
     const loadBookings = () => {
