@@ -101,29 +101,43 @@ const Calendar = ({ bookings, onDateClick, selectedBooking }: CalendarProps) => 
       const startingBooking = getStartingBooking(dateStr);
       const isSplitDay = endingBooking && startingBooking && endingBooking.id !== startingBooking.id;
 
-      // 确定显示哪个预订（优先显示结束的预订，因为用户说"一般是上个订单的颜色"）
+      // 确定显示哪个预订
       const displayBooking = isSplitDay ? endingBooking : booking;
+      
+      // 判断是否是开始日或结束日（但不是分割日）
+      const isStartOnly = isStart && !isSplitDay;
+      const isEndOnly = isEnd && !isSplitDay;
 
       days.push(
         <div
           key={day}
-          className={`calendar-day ${displayBooking ? 'has-booking' : ''} ${displayBooking?.color === 'green' ? 'special-booking' : ''} ${isSelected ? 'selected' : ''} ${today ? 'today' : ''} ${isStart ? 'start' : ''} ${isEnd ? 'end' : ''} ${isSplitDay ? 'split-day' : ''}`}
+          className={`calendar-day ${displayBooking ? 'has-booking' : ''} ${displayBooking?.color === 'green' ? 'special-booking' : ''} ${isSelected ? 'selected' : ''} ${today ? 'today' : ''} ${isStartOnly ? 'start-only' : ''} ${isEndOnly ? 'end-only' : ''} ${isSplitDay ? 'split-day' : ''}`}
           onClick={() => onDateClick(dateStr)}
           title={displayBooking ? `${displayBooking.guests}人 - ${displayBooking.note || '無備註'}` : ''}
-          style={isSplitDay ? {
+          style={(isSplitDay ? {
             '--ending-color': endingBooking?.color === 'green' 
               ? 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)' 
               : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             '--starting-color': startingBooking?.color === 'green'
               ? 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)'
               : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          } as React.CSSProperties : undefined}
+          } : (isStartOnly || isEndOnly) ? {
+            '--booking-color': displayBooking?.color === 'green'
+              ? 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)'
+              : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          } : {}) as React.CSSProperties}
         >
           {isSplitDay && (
             <>
               <div className="split-background ending-bg"></div>
               <div className="split-background starting-bg"></div>
               <div className="split-line"></div>
+            </>
+          )}
+          {(isStartOnly || isEndOnly) && (
+            <>
+              <div className="half-background booking-bg"></div>
+              <div className="half-line"></div>
             </>
           )}
           <span className="day-number">{day}</span>

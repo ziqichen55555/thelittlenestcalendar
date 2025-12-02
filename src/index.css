@@ -235,7 +235,7 @@ body {
   font-weight: 600;
 }
 
-/* Split Day Styles */
+/* Split Day Styles (斜线分割 - 两个预订交接) */
 .calendar-day.split-day {
   padding: 0;
 }
@@ -287,6 +287,69 @@ body {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
+/* Half Day Styles (上下分割 - 开始/结束日) */
+.calendar-day.start-only,
+.calendar-day.end-only {
+  padding: 0;
+  background: white;
+}
+
+.half-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+}
+
+.half-background.booking-bg {
+  background: var(--booking-color);
+}
+
+.calendar-day.start-only .half-background.booking-bg {
+  clip-path: polygon(0 0, 100% 0, 100% 50%, 0 50%);
+}
+
+.calendar-day.end-only .half-background.booking-bg {
+  clip-path: polygon(0 50%, 100% 50%, 100% 100%, 0 100%);
+}
+
+.half-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    transparent calc(50% - 2px),
+    rgba(0, 0, 0, 0.3) calc(50% - 2px),
+    rgba(0, 0, 0, 0.3) calc(50% + 2px),
+    transparent calc(50% + 2px),
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.calendar-day.start-only .day-number,
+.calendar-day.start-only .weather-info,
+.calendar-day.start-only .booking-indicator,
+.calendar-day.end-only .day-number,
+.calendar-day.end-only .weather-info,
+.calendar-day.end-only .booking-indicator {
+  position: relative;
+  z-index: 2;
+}
+
+.calendar-day.start-only .booking-indicator,
+.calendar-day.end-only .booking-indicator {
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
 @media (max-width: 768px) {
   .split-line {
     background: linear-gradient(
@@ -300,11 +363,27 @@ body {
     );
   }
   
-  .calendar-day.split-day .day-number {
+  .half-line {
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      transparent calc(50% - 1.5px),
+      rgba(0, 0, 0, 0.4) calc(50% - 1.5px),
+      rgba(0, 0, 0, 0.4) calc(50% + 1.5px),
+      transparent calc(50% + 1.5px),
+      transparent 100%
+    );
+  }
+  
+  .calendar-day.split-day .day-number,
+  .calendar-day.start-only .day-number,
+  .calendar-day.end-only .day-number {
     font-size: 0.8rem;
   }
   
-  .calendar-day.split-day .guests-count {
+  .calendar-day.split-day .guests-count,
+  .calendar-day.start-only .guests-count,
+  .calendar-day.end-only .guests-count {
     font-size: 0.6rem;
     padding: 1px 4px;
   }
