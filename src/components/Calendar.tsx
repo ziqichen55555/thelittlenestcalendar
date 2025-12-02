@@ -15,13 +15,60 @@ const Calendar = ({ bookings, onDateClick, selectedBooking }: CalendarProps) => 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
-  // 当 bookings 变化时，强制重新渲染
+  // 当 bookings 变化时，强制重新渲染，并自动切换到有预订的月份
   useEffect(() => {
     console.log('=== Calendar: bookings prop 变化 ===');
     console.log('bookings 数量:', bookings.length);
     console.log('bookings 内容:', JSON.stringify(bookings, null, 2));
+    
+    // 如果当前月份没有预订，自动切换到有预订的最近月份
+    if (bookings.length > 0) {
+      const currentYear = currentDate.getFullYear();
+      const currentMonth = currentDate.getMonth();
+      
+      // 检查当前月份是否有预订
+      const hasBookingInCurrentMonth = bookings.some(b => {
+        const start = parseDate(b.startDate);
+        const end = parseDate(b.endDate);
+        return (start.getFullYear() === currentYear && start.getMonth() === currentMonth) ||
+               (end.getFullYear() === currentYear && end.getMonth() === currentMonth) ||
+               (start <= new Date(currentYear, currentMonth + 1, 0) && end >= new Date(currentYear, currentMonth, 1));
+      });
+      
+      // 如果当前月份没有预订，找到最近的预订日期
+      if (!hasBookingInCurrentMonth) {
+        const allDates = bookings.flatMap(b => {
+          const dates = [];
+          const start = parseDate(b.startDate);
+          const end = parseDate(b.endDate);
+          for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+            dates.push(new Date(d));
+          }
+          return dates;
+        });
+        
+        if (allDates.length > 0) {
+          // 找到最近的未来日期，或者如果没有未来日期，找最近的过去日期
+          const now = new Date();
+          const futureDates = allDates.filter(d => d >= now);
+          const targetDate = futureDates.length > 0 
+            ? futureDates.sort((a, b) => a.getTime() - b.getTime())[0]
+            : allDates.sort((a, b) => b.getTime() - a.getTime())[0];
+          
+          if (targetDate) {
+            const targetYear = targetDate.getFullYear();
+            const targetMonth = targetDate.getMonth();
+            if (targetYear !== currentYear || targetMonth !== currentMonth) {
+              console.log(`自动切换到有预订的月份: ${targetYear}年${targetMonth + 1}月`);
+              setCurrentDate(new Date(targetYear, targetMonth, 1));
+              return; // 提前返回，避免重复设置
+            }
+          }
+        }
+      }
+    }
+    
     // 强制重新渲染日历
-    // 通过更新 currentDate 的一个副本，触发 Calendar 组件的重新渲染
     setCurrentDate(new Date(currentDate.getTime()));
     console.log('已触发重新渲染');
   }, [bookings]);
@@ -63,13 +110,23 @@ const Calendar = ({ bookings, onDateClick, selectedBooking }: CalendarProps) => 
 
   const getBookingForDate = (date: Date): Booking | null => {
     const dateStr = formatDate(date);
+    // 直接使用字符串比较，更可靠
     const found = bookings.find(b => {
-      const inRange = isDateInRange(date, b.startDate, b.endDate);
+      const inRange = dateStr >= b.startDate && dateStr <= b.endDate;
       if (inRange) {
-        console.log(`找到预订: ${dateStr} 在 ${b.startDate} 到 ${b.endDate} 之间`, b);
+        console.log(`✓ 找到预订: ${dateStr} 在 ${b.startDate} 到 ${b.endDate} 之间`, b);
       }
       return inRange;
     });
+    if (!found) {
+      // 调试：检查为什么没找到
+      if (bookings.length > 0 && (dateStr === '2024-12-03' || dateStr === '2024-12-06' || dateStr === '2024-12-07')) {
+        console.log(`✗ 未找到预订: ${dateStr}`, {
+          bookings: bookings.map(b => ({ start: b.startDate, end: b.endDate })),
+          dateStr
+        });
+      }
+    }
     return found || null;
   };
 
@@ -144,8 +201,8 @@ const Calendar = ({ bookings, onDateClick, selectedBooking }: CalendarProps) => 
       const isStartOnly = isStart && !isSplitDay;
       const isEndOnly = isEnd && !isSplitDay;
       
-      // 调试：检查特定日期
-      if (booking) {
+      // 调试：检查特定日期（只对前几个有预订的日期输出，避免日志过多）
+      if (booking && (dateStr === '2024-12-03' || dateStr === '2024-12-06' || dateStr === '2024-12-07' || dateStr === '2025-01-11')) {
         console.log(`日期 ${dateStr} (${day}号):`, { 
           booking: { id: booking.id, start: booking.startDate, end: booking.endDate, color: booking.color },
           isStart, 
@@ -154,7 +211,11 @@ const Calendar = ({ bookings, onDateClick, selectedBooking }: CalendarProps) => 
           isEndOnly,
           isSplitDay,
           dateStr,
-          className: `has-booking ${booking.color === 'green' ? 'special-booking' : ''} ${isStartOnly ? 'start-only' : ''} ${isEndOnly ? 'end-only' : ''}`
+          hasBookingClass: displayBooking ? 'has-booking' : '',
+          specialClass: displayBooking?.color === 'green' ? 'special-booking' : '',
+          startOnlyClass: isStartOnly ? 'start-only' : '',
+          endOnlyClass: isEndOnly ? 'end-only' : '',
+          splitDayClass: isSplitDay ? 'split-day' : ''
         });
       }
 
