@@ -103,6 +103,18 @@ export const getBookings = async (): Promise<Booking[]> => {
     console.log('📊 数据类型:', Array.isArray(data) ? '数组' : typeof data);
     console.log('📊 数据长度:', Array.isArray(data) ? data.length : 'N/A');
     
+    // 检查是否有错误
+    if (data && typeof data === 'object' && 'error' in data) {
+      const errorMsg = data.error;
+      console.error('❌ Google Sheets 错误:', errorMsg);
+      
+      if (errorMsg === 'Sheet not found') {
+        throw new Error('工作表未找到：请在 Google Sheet 中创建名为 "thelittlenestbookings" 的工作表。\n\n详细步骤请查看：创建thelittlenestbookings工作表-详细步骤.md');
+      } else {
+        throw new Error(`Google Sheets 错误: ${errorMsg}`);
+      }
+    }
+    
     const bookings = Array.isArray(data) ? data.map((item: any, index: number) => {
       // 将 Google Sheets 数据转换为 Booking 格式
       // 注意：用户的脚本使用表头作为字段名
