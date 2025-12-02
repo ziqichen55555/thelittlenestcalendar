@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Booking } from '../types';
-import { formatDate, getDaysInMonth, getFirstDayOfMonth, isDateInRange } from '../utils/dateUtils';
+import { formatDate, getDaysInMonth, getFirstDayOfMonth, isDateInRange, parseDate } from '../utils/dateUtils';
 import { fetchPerthWeather, WeatherData } from '../utils/weather';
 
 interface CalendarProps {
@@ -57,7 +57,15 @@ const Calendar = ({ bookings, onDateClick, selectedBooking }: CalendarProps) => 
   };
 
   const getBookingForDate = (date: Date): Booking | null => {
-    return bookings.find(b => isDateInRange(date, b.startDate, b.endDate)) || null;
+    const dateStr = formatDate(date);
+    const found = bookings.find(b => {
+      const inRange = isDateInRange(date, b.startDate, b.endDate);
+      if (inRange) {
+        console.log(`找到预订: ${dateStr} 在 ${b.startDate} 到 ${b.endDate} 之间`, b);
+      }
+      return inRange;
+    });
+    return found || null;
   };
 
   // 获取在某一天结束的预订
@@ -88,9 +96,20 @@ const Calendar = ({ bookings, onDateClick, selectedBooking }: CalendarProps) => 
     const days = [];
     
     // 调试：检查 bookings 数据
-    console.log('渲染日历，预订数量:', bookings.length);
+    console.log('=== 开始渲染日历 ===');
+    console.log('当前月份:', year, month + 1);
+    console.log('预订数量:', bookings.length);
     if (bookings.length > 0) {
-      console.log('预订数据:', bookings);
+      console.log('所有预订数据:', JSON.stringify(bookings, null, 2));
+      // 检查当前月份是否有预订
+      const monthBookings = bookings.filter(b => {
+        const start = parseDate(b.startDate);
+        const end = parseDate(b.endDate);
+        return (start.getFullYear() === year && start.getMonth() === month) ||
+               (end.getFullYear() === year && end.getMonth() === month) ||
+               (start <= new Date(year, month + 1, 0) && end >= new Date(year, month, 1));
+      });
+      console.log('当前月份的预订:', monthBookings.length, monthBookings);
     }
     
     // 空白天数
@@ -107,11 +126,6 @@ const Calendar = ({ bookings, onDateClick, selectedBooking }: CalendarProps) => 
       const isStart = booking && booking.startDate === dateStr;
       const isEnd = booking && booking.endDate === dateStr;
       const today = isToday(date);
-      
-      // 调试：检查特定日期
-      if (booking && (day === 3 || day === 6 || day === 7)) {
-        console.log(`日期 ${dateStr}:`, { booking, isStart, isEnd, dateStr });
-      }
 
       // 检查是否是分割日（既是结束又是开始）
       const endingBooking = getEndingBooking(dateStr);
@@ -124,6 +138,20 @@ const Calendar = ({ bookings, onDateClick, selectedBooking }: CalendarProps) => 
       // 判断是否是开始日或结束日（但不是分割日）
       const isStartOnly = isStart && !isSplitDay;
       const isEndOnly = isEnd && !isSplitDay;
+      
+      // 调试：检查特定日期
+      if (booking) {
+        console.log(`日期 ${dateStr} (${day}号):`, { 
+          booking: { id: booking.id, start: booking.startDate, end: booking.endDate, color: booking.color },
+          isStart, 
+          isEnd,
+          isStartOnly,
+          isEndOnly,
+          isSplitDay,
+          dateStr,
+          className: `has-booking ${booking.color === 'green' ? 'special-booking' : ''} ${isStartOnly ? 'start-only' : ''} ${isEndOnly ? 'end-only' : ''}`
+        });
+      }
 
       days.push(
         <div

@@ -64,7 +64,8 @@ function App() {
       ];
       
       saveBookings(initialBookings);
-      setBookings(initialBookings);
+      console.log('保存初始数据，数量:', initialBookings.length);
+      setBookings([...initialBookings]); // 使用展开运算符确保创建新数组
     };
     
     loadBookings();
