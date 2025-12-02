@@ -37,8 +37,9 @@ function App() {
     console.log('=== 📡 App: 连接 Google Sheets 云端存储 ===');
     
     // 检查 Google Script URL
+    // 注意：使用 /exec 版本（生产版本），不是 /dev 版本
     const scriptUrl = (import.meta as any).env?.VITE_GOOGLE_SCRIPT_URL || 
-      'https://script.google.com/macros/s/AKfycbxsJMmHKtlQwn7wqFX3T6xRP96gDM8UdJp5MoZ2Q31_RSlOZTHLTlqoEAkfB8oZecY-Jw/exec';
+      'https://script.google.com/macros/s/AKfycbzM8hLEu8u82j0VbQq4QRbbt5M56IbiJuHKlhTnNU9L/exec';
     
     console.log('📍 Google Script URL:', scriptUrl);
     console.log('📍 URL 是否有效:', !scriptUrl.includes('your-script-url'));
