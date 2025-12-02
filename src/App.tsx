@@ -38,14 +38,38 @@ function App() {
       setError(null);
     });
     
-    // 初始化：检查是否有数据，如果没有则插入初始数据
+    // 初始化：检查是否有数据
     setIsLoading(true);
+    
+    // 先检查是否有本地存储的数据
+    const checkLocalStorage = () => {
+      try {
+        const stored = localStorage.getItem('room-bookings');
+        if (stored) {
+          const localBookings: Booking[] = JSON.parse(stored);
+          if (localBookings.length > 0) {
+            console.log('📦 发现本地存储数据:', localBookings.length, '个预订');
+            return localBookings;
+          }
+        }
+      } catch (error) {
+        console.error('读取本地存储失败:', error);
+      }
+      return null;
+    };
+    
+    const localBookings = checkLocalStorage();
+    
     getBookings()
       .then((existingBookings) => {
         setIsLoading(false);
         if (existingBookings.length === 0) {
-          console.log('没有现有数据');
-          setError('数据库为空，请点击"初始化数据"按钮添加初始预订');
+          console.log('没有云端数据');
+          if (localBookings && localBookings.length > 0) {
+            setError(`数据库为空，但发现 ${localBookings.length} 个本地预订。请点击"从本地导入"按钮将数据迁移到云端。`);
+          } else {
+            setError('数据库为空，请点击"初始化数据"按钮添加示例预订');
+          }
         } else {
           console.log('✓ 已有云端数据，数量:', existingBookings.length);
           console.log('📊 当前所有预订数据:', existingBookings);
@@ -59,7 +83,11 @@ function App() {
       .catch((error) => {
         console.error('❌ 加载云端数据失败:', error);
         setIsLoading(false);
-        setError(`连接数据库失败: ${error instanceof Error ? error.message : '未知错误'}. 请检查 Firebase 配置。`);
+        if (localBookings && localBookings.length > 0) {
+          setError(`连接数据库失败，但发现 ${localBookings.length} 个本地预订。请点击"从本地导入"按钮将数据迁移到云端。`);
+        } else {
+          setError(`连接数据库失败: ${error instanceof Error ? error.message : '未知错误'}. 请检查 Firebase 配置。`);
+        }
       });
     
     // 清理函数：取消监听
@@ -117,6 +145,43 @@ function App() {
     setShowForm(false);
     setEditingBooking(null);
     setSelectedDate('');
+  };
+
+  // 从 localStorage 导入数据
+  const handleImportFromLocalStorage = async () => {
+    try {
+      const stored = localStorage.getItem('room-bookings');
+      if (!stored) {
+        alert('本地存储中没有找到数据');
+        return;
+      }
+      
+      const localBookings: Booking[] = JSON.parse(stored);
+      if (localBookings.length === 0) {
+        alert('本地存储中没有预订数据');
+        return;
+      }
+      
+      if (!confirm(`找到 ${localBookings.length} 个本地预订，是否导入到云端？`)) {
+        return;
+      }
+      
+      setIsLoading(true);
+      setError(null);
+      
+      await saveBookings(localBookings);
+      console.log('✓ 本地数据导入成功');
+      alert(`成功导入 ${localBookings.length} 个预订到云端！`);
+      
+      // 清除本地存储
+      localStorage.removeItem('room-bookings');
+    } catch (error) {
+      console.error('❌ 导入数据失败:', error);
+      setError(`导入失敗: ${error instanceof Error ? error.message : '未知错误'}`);
+      alert('导入失敗，請檢查網絡連接');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleInitializeData = async () => {
@@ -243,13 +308,38 @@ function App() {
           </button>
           
           {bookings.length === 0 && !isLoading && (
-            <button
-              className="btn btn-secondary"
-              onClick={handleInitializeData}
-              style={{ marginTop: '10px', width: '100%' }}
-            >
-              🔄 初始化數據（添加示例預訂）
-            </button>
+            <>
+              {(() => {
+                try {
+                  const stored = localStorage.getItem('room-bookings');
+                  if (stored) {
+                    const localBookings: Booking[] = JSON.parse(stored);
+                    if (localBookings.length > 0) {
+                      return (
+                        <button
+                          className="btn btn-secondary"
+                          onClick={handleImportFromLocalStorage}
+                          style={{ marginTop: '10px', width: '100%', backgroundColor: '#22c55e' }}
+                        >
+                          📥 从本地导入 ({localBookings.length} 个预订)
+                        </button>
+                      );
+                    }
+                  }
+                } catch (e) {
+                  // 忽略错误
+                }
+                return (
+                  <button
+                    className="btn btn-secondary"
+                    onClick={handleInitializeData}
+                    style={{ marginTop: '10px', width: '100%' }}
+                  >
+                    🔄 初始化數據（添加示例預訂）
+                  </button>
+                );
+              })()}
+            </>
           )}
           
           <BookingList
