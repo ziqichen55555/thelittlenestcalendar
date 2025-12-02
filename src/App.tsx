@@ -3,12 +3,13 @@ import Calendar from './components/Calendar';
 import BookingForm from './components/BookingForm';
 import BookingList from './components/BookingList';
 import { Booking } from './types';
-import { 
-  getBookings, 
-  addBooking, 
-  updateBooking, 
-  deleteBooking, 
-  subscribeToBookings 
+import {
+  getBookings,
+  addBooking,
+  updateBooking,
+  deleteBooking,
+  subscribeToBookings,
+  diagnoseGoogleSheet
 } from './utils/googleSheetsStorage';
 
 function App() {
@@ -39,7 +40,7 @@ function App() {
     // 检查 Google Script URL
     // 注意：使用 /exec 版本（生产版本），不是 /dev 版本
     const scriptUrl = (import.meta as any).env?.VITE_GOOGLE_SCRIPT_URL || 
-      'https://script.google.com/macros/s/AKfycbxsJMmHKtlQwn7wqFX3T6xRP96gDM8UdJp5MoZ2Q31_RSlOZTHLTlqoEAkfB8oZecY-Jw/exec';
+      'https://script.google.com/macros/s/AKfycbxMZB7n-n6RGxlyBCCrXHM26fHNoHlf9d_M57Iw7tVZU1GQWm-m4BSvctHJeGZn2PAd/exec';
     
     console.log('📍 Google Script URL:', scriptUrl);
     console.log('📍 URL 是否有效:', !scriptUrl.includes('your-script-url'));

@@ -3,7 +3,7 @@ import { Booking } from '../types';
 // Google Apps Script Web App URL
 // 注意：使用 /exec 版本（生产版本），不是 /dev 版本
 const WEB_APP_URL = (import.meta as any).env?.VITE_GOOGLE_SCRIPT_URL || 
-  'https://script.google.com/macros/s/AKfycbxsJMmHKtlQwn7wqFX3T6xRP96gDM8UdJp5MoZ2Q31_RSlOZTHLTlqoEAkfB8oZecY-Jw/exec';
+  'https://script.google.com/macros/s/AKfycbxMZB7n-n6RGxlyBCCrXHM26fHNoHlf9d_M57Iw7tVZU1GQWm-m4BSvctHJeGZn2PAd/exec';
 
 // 检查配置
 const checkConfig = () => {
@@ -290,5 +290,86 @@ export const subscribeToBookings = (
     console.log('🔌 停止监听');
     clearInterval(intervalId);
   };
+};
+
+// 诊断 Google Sheet 连接状态
+export const diagnoseGoogleSheet = async (): Promise<{
+  success: boolean;
+  url: string;
+  status: number;
+  data: any;
+  error?: string;
+  sheetExists: boolean;
+  hasData: boolean;
+  recordCount: number;
+}> => {
+  checkConfig();
+  
+  const result = {
+    success: false,
+    url: WEB_APP_URL,
+    status: 0,
+    data: null as any,
+    error: undefined as string | undefined,
+    sheetExists: false,
+    hasData: false,
+    recordCount: 0,
+  };
+  
+  try {
+    console.log('🔍 开始诊断 Google Sheet 连接...');
+    console.log('📍 Web App URL:', WEB_APP_URL);
+    
+    const response = await fetch(WEB_APP_URL, {
+      method: 'GET',
+    });
+    
+    result.status = response.status;
+    console.log('📊 响应状态:', response.status, response.statusText);
+    
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '无法读取错误信息');
+      result.error = `HTTP ${response.status}: ${errorText}`;
+      console.error('❌ HTTP 错误:', result.error);
+      return result;
+    }
+    
+    const data = await response.json();
+    result.data = data;
+    console.log('📊 返回的数据:', data);
+    
+    // 检查是否有错误
+    if (data && typeof data === 'object' && 'error' in data) {
+      result.error = data.error;
+      result.sheetExists = data.error !== 'Sheet not found';
+      console.error('❌ Google Sheets 错误:', result.error);
+      return result;
+    }
+    
+    // 检查是否是数组（正常情况）
+    if (Array.isArray(data)) {
+      result.success = true;
+      result.sheetExists = true;
+      result.recordCount = data.length;
+      result.hasData = data.length > 0;
+      console.log('✓ 诊断成功：工作表存在，有', data.length, '条记录');
+      
+      if (data.length > 0) {
+        console.log('📋 前 3 条记录:');
+        data.slice(0, 3).forEach((item, index) => {
+          console.log(`  ${index + 1}.`, item);
+        });
+      }
+    } else {
+      result.error = '返回的数据格式不正确，期望数组但得到: ' + typeof data;
+      console.error('❌ 数据格式错误:', result.error);
+    }
+    
+    return result;
+  } catch (error) {
+    result.error = error instanceof Error ? error.message : String(error);
+    console.error('❌ 诊断失败:', result.error);
+    return result;
+  }
 };
 
