@@ -109,6 +109,9 @@
       <h2>1. 基本信息</h2>
       <p><strong>Web App URL:</strong></p>
       <code id="url">https://script.google.com/macros/s/AKfycbxMZB7n-n6RGxlyBCCrXHM26fHNoHlf9d_M57Iw7tVZU1GQWm-m4BSvctHJeGZn2PAd/exec</code>
+      <p style="margin-top: 10px; color: #666; font-size: 14px;">
+        <strong>注意：</strong>如果 POST 请求失败并出现 CORS 405 错误，说明 Google Apps Script 的 <code>doOptions</code> 函数可能没有正确部署。
+      </p>
     </div>
 
     <div class="test-section">
@@ -207,6 +210,7 @@
       };
       
       try {
+        log(`发送数据: ${JSON.stringify(testData, null, 2)}`);
         const response = await fetch(API_URL, {
           method: 'POST',
           headers: {
@@ -216,6 +220,8 @@
         });
         
         log(`响应状态: ${response.status} ${response.statusText}`);
+        log(`响应头: ${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}`);
+        
         const data = await response.json();
         log(`返回数据: ${JSON.stringify(data, null, 2)}`);
         
@@ -229,6 +235,18 @@
       } catch (error) {
         setStatus(`❌ POST 请求失败: ${error.message}`, 'error');
         log(`错误详情: ${error.toString()}`, 'error');
+        
+        // 检查是否是 CORS 错误
+        if (error.message.includes('CORS') || error.message.includes('preflight') || error.message.includes('Load failed')) {
+          log('💡 这是 CORS 错误，可能的原因：', 'error');
+          log('   1. Google Apps Script 缺少 doOptions 函数', 'error');
+          log('   2. doOptions 函数存在但部署版本未更新', 'error');
+          log('   3. Web App 访问权限未设置为"所有人"', 'error');
+          log('   4. 使用了 /dev 版本而不是 /exec 版本', 'error');
+          log('', 'error');
+          log('📖 解决方案请查看：修复CORS错误.md', 'error');
+        }
+        
         return { success: false, error: error.message };
       }
     }
@@ -311,6 +329,10 @@
         summaryItems.push('✅ POST 请求成功 - 可以添加数据');
       } else if (results.post) {
         summaryItems.push(`❌ POST 请求失败 - ${results.post.error || '未知错误'}`);
+        if (results.post.error && (results.post.error.includes('CORS') || results.post.error.includes('preflight') || results.post.error.includes('Load failed'))) {
+          summaryItems.push('💡 这是 CORS 错误，需要检查 doOptions 函数和部署设置');
+          summaryItems.push('📖 详细解决方案：查看 修复CORS错误.md 和 立即执行-复制代码步骤.md');
+        }
       }
       
       showSummary(summaryItems);
