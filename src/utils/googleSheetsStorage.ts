@@ -74,6 +74,16 @@ export const getBookings = async (): Promise<Booking[]> => {
     console.log('📡 从 Google Sheets 获取预订数据...');
     console.log('请求 URL:', WEB_APP_URL);
     
+    // 检查是否有旧的 localStorage 数据
+    const oldStorageKey = 'room-bookings';
+    const oldData = localStorage.getItem(oldStorageKey);
+    if (oldData) {
+      console.warn('⚠️ 发现旧的 localStorage 数据！');
+      console.warn('📍 localStorage 数据:', oldData);
+      console.warn('💡 提示：这些数据不会显示，因为现在使用 Google Sheets。');
+      console.warn('💡 如果想清理，可以在浏览器控制台运行：localStorage.removeItem("room-bookings")');
+    }
+    
     // 使用 GET 请求获取数据
     const response = await fetch(WEB_APP_URL, {
       method: 'GET',
@@ -88,7 +98,10 @@ export const getBookings = async (): Promise<Booking[]> => {
     }
 
     const data = await response.json();
-    console.log('获取到的原始数据:', data);
+    console.log('📊 获取到的原始数据（来自 Google Sheets）:', data);
+    console.log('📊 数据类型:', Array.isArray(data) ? '数组' : typeof data);
+    console.log('📊 数据长度:', Array.isArray(data) ? data.length : 'N/A');
+    
     const bookings = Array.isArray(data) ? data.map((item: any, index: number) => {
       // 将 Google Sheets 数据转换为 Booking 格式
       // 注意：用户的脚本使用表头作为字段名
@@ -102,7 +115,16 @@ export const getBookings = async (): Promise<Booking[]> => {
       };
     }) : [];
     
-    console.log('✓ 成功获取', bookings.length, '个预订');
+    console.log('✓ 成功获取', bookings.length, '个预订（来自 Google Sheets）');
+    if (bookings.length > 0) {
+      console.log('📋 预订列表:');
+      bookings.forEach((booking, index) => {
+        console.log(`  ${index + 1}. ID: ${booking.id}, ${booking.startDate} - ${booking.endDate} (${booking.guests}人) - ${booking.note || '无备注'}`);
+      });
+    } else {
+      console.log('ℹ️ Google Sheets 中目前没有预订数据');
+    }
+    
     return bookings;
   } catch (error) {
     console.error('❌ 获取预订失败:', error);
