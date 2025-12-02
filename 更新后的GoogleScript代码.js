@@ -2,15 +2,11 @@
 const SHEET_NAME = "thelittlenestbookings";
 
 // 处理 CORS 预检请求（重要！）
+// 注意：Google Apps Script 的 ContentService 不支持 setHeaders
+// 但我们可以返回一个空的响应，浏览器会处理
 function doOptions() {
   return ContentService.createTextOutput('')
-    .setMimeType(ContentService.MimeType.JSON)
-    .setHeaders({
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-      'Access-Control-Max-Age': '3600'
-    });
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 function doGet() {
@@ -20,10 +16,7 @@ function doGet() {
   if (!sheet) {
     return ContentService.createTextOutput(
       JSON.stringify({ error: "Sheet not found" })
-    ).setMimeType(ContentService.MimeType.JSON)
-      .setHeaders({
-        'Access-Control-Allow-Origin': '*'
-      });
+    ).setMimeType(ContentService.MimeType.JSON);
   }
   
   const values = sheet.getDataRange().getValues();
@@ -31,10 +24,7 @@ function doGet() {
   if (values.length === 0) {
     return ContentService.createTextOutput(
       JSON.stringify([])
-    ).setMimeType(ContentService.MimeType.JSON)
-      .setHeaders({
-        'Access-Control-Allow-Origin': '*'
-      });
+    ).setMimeType(ContentService.MimeType.JSON);
   }
   
   const headers = values[0];
@@ -50,18 +40,10 @@ function doGet() {
   
   return ContentService.createTextOutput(
     JSON.stringify(result)
-  ).setMimeType(ContentService.MimeType.JSON)
-    .setHeaders({
-      'Access-Control-Allow-Origin': '*'
-    });
+  ).setMimeType(ContentService.MimeType.JSON);
 }
 
 function doPost(e) {
-  // 设置 CORS 头（所有响应都需要）
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': '*'
-  };
-  
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sheet = ss.getSheetByName(SHEET_NAME);
   
@@ -90,8 +72,7 @@ function doPost(e) {
     
     return ContentService.createTextOutput(
       JSON.stringify({ status: "success", id: id })
-    ).setMimeType(ContentService.MimeType.JSON)
-      .setHeaders(corsHeaders);
+    ).setMimeType(ContentService.MimeType.JSON);
     
   } else if (action === "update") {
     // 更新记录
@@ -100,8 +81,7 @@ function doPost(e) {
     if (!id) {
       return ContentService.createTextOutput(
         JSON.stringify({ status: "error", message: "ID is required" })
-      ).setMimeType(ContentService.MimeType.JSON)
-        .setHeaders(corsHeaders);
+      ).setMimeType(ContentService.MimeType.JSON);
     }
     
     const values = sheet.getDataRange().getValues();
@@ -122,8 +102,7 @@ function doPost(e) {
     
     return ContentService.createTextOutput(
       JSON.stringify({ status: "success" })
-    ).setMimeType(ContentService.MimeType.JSON)
-      .setHeaders(corsHeaders);
+    ).setMimeType(ContentService.MimeType.JSON);
     
   } else if (action === "delete") {
     // 删除记录
@@ -132,8 +111,7 @@ function doPost(e) {
     if (!id) {
       return ContentService.createTextOutput(
         JSON.stringify({ status: "error", message: "ID is required" })
-      ).setMimeType(ContentService.MimeType.JSON)
-        .setHeaders(corsHeaders);
+      ).setMimeType(ContentService.MimeType.JSON);
     }
     
     const values = sheet.getDataRange().getValues();
@@ -147,8 +125,7 @@ function doPost(e) {
     
     return ContentService.createTextOutput(
       JSON.stringify({ status: "success" })
-    ).setMimeType(ContentService.MimeType.JSON)
-      .setHeaders(corsHeaders);
+    ).setMimeType(ContentService.MimeType.JSON);
     
   } else if (action === "clearAll") {
     // 清空所有数据（保留表头）
@@ -159,8 +136,7 @@ function doPost(e) {
     
     return ContentService.createTextOutput(
       JSON.stringify({ status: "success" })
-    ).setMimeType(ContentService.MimeType.JSON)
-      .setHeaders(corsHeaders);
+    ).setMimeType(ContentService.MimeType.JSON);
     
   } else {
     // 默认行为：添加（兼容旧代码）
@@ -176,8 +152,7 @@ function doPost(e) {
     
     return ContentService.createTextOutput(
       JSON.stringify({ status: "success", id: id })
-    ).setMimeType(ContentService.MimeType.JSON)
-      .setHeaders(corsHeaders);
+    ).setMimeType(ContentService.MimeType.JSON);
   }
 }
 
