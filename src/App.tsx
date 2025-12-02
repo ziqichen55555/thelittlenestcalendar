@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import Calendar from './components/Calendar';
 import BookingForm from './components/BookingForm';
 import BookingList from './components/BookingList';
+import SyncPanel from './components/SyncPanel';
 import { Booking } from './types';
-import { getBookings, addBooking, updateBooking, deleteBooking } from './utils/storage';
+import { getBookings, addBooking, updateBooking, deleteBooking, saveBookings } from './utils/storage';
+import { importBookings } from './utils/cloudSync';
 
 function App() {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -12,7 +14,27 @@ function App() {
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
 
   useEffect(() => {
-    setBookings(getBookings());
+    // 检查 URL 参数中是否有数据（用于跨设备同步）
+    const urlParams = new URLSearchParams(window.location.search);
+    const dataParam = urlParams.get('data');
+    if (dataParam) {
+      try {
+        const json = decodeURIComponent(atob(dataParam));
+        const importedBookings = importBookings(json);
+        if (importedBookings) {
+          if (confirm(`檢測到同步數據，是否導入 ${importedBookings.length} 個預訂？`)) {
+            saveBookings(importedBookings);
+            setBookings(importedBookings);
+            // 清除 URL 参数
+            window.history.replaceState({}, '', window.location.pathname);
+          }
+        }
+      } catch (error) {
+        console.error('URL 數據解析失敗:', error);
+      }
+    } else {
+      setBookings(getBookings());
+    }
   }, []);
 
   const handleDateClick = (date: string) => {
@@ -52,6 +74,11 @@ function App() {
     setSelectedDate('');
   };
 
+  const handleImportBookings = (importedBookings: Booking[]) => {
+    saveBookings(importedBookings);
+    setBookings(importedBookings);
+  };
+
   return (
     <div className="app">
       <header className="app-header">
@@ -89,6 +116,11 @@ function App() {
             bookings={bookings}
             onEdit={handleEditBooking}
             onDelete={handleDeleteBooking}
+          />
+          
+          <SyncPanel
+            bookings={bookings}
+            onImport={handleImportBookings}
           />
         </div>
       </main>
