@@ -11,8 +11,36 @@ const checkConfig = () => {
   }
 };
 
-// 注意：用户的脚本使用 doPost 和 doGet，不需要 action 参数
-// doPost 接收 JSON 数据，doGet 返回所有数据
+// 调用 Google Apps Script Web App 的 doPost
+const callPostScript = async (action: string, data: any): Promise<any> => {
+  checkConfig();
+  
+  try {
+    console.log(`🚀 调用 Google Script doPost (action: ${action})`, data);
+    const response = await fetch(WEB_APP_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ action, ...data }), // 包含 action 和数据
+    });
+
+    console.log('doPost 响应状态:', response.status, response.statusText);
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '无法读取错误信息');
+      console.error('doPost 响应错误:', errorText);
+      throw new Error(`操作失败: ${response.status} ${response.statusText}`);
+    }
+
+    const result = await response.json().catch(() => ({ status: 'success' })); // 尝试解析 JSON，否则返回成功
+    console.log('doPost 响应数据:', result);
+    return result;
+  } catch (error) {
+    console.error('❌ 调用 Google Script doPost 失败:', error);
+    throw error;
+  }
+};
 
 // 获取所有预订
 export const getBookings = async (): Promise<Booking[]> => {
@@ -25,7 +53,6 @@ export const getBookings = async (): Promise<Booking[]> => {
     // 使用 GET 请求获取数据
     const response = await fetch(WEB_APP_URL, {
       method: 'GET',
-      // 不使用 no-cors，因为需要读取响应
     });
 
     console.log('响应状态:', response.status, response.statusText);
@@ -68,6 +95,7 @@ export const addBooking = async (booking: Booking): Promise<void> => {
     
     // 用户的脚本期望的字段名：StartDate, EndDate, GuestsNo, Note, Color
     const data = {
+      ID: booking.id, // 确保 ID 也传递过去
       StartDate: booking.startDate,
       EndDate: booking.endDate,
       GuestsNo: booking.guests,
@@ -75,63 +103,39 @@ export const addBooking = async (booking: Booking): Promise<void> => {
       Color: booking.color || '',
     };
     
-    // Google Apps Script Web App 需要特殊处理 CORS
-    // 使用 no-cors 模式避免 CORS 错误
-    await fetch(WEB_APP_URL, {
-      method: 'POST',
-      mode: 'no-cors', // Google Apps Script 需要这个，但无法读取响应
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-
-    // no-cors 模式下无法读取响应，所以假设成功
-    // 实际成功与否需要通过后续的 getBookings 验证
-
-    // 等待一下确保数据已保存
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await callPostScript('add', data);
     
-    // 验证数据是否已保存（通过重新获取）
-    try {
-      const allBookings = await getBookings();
-      const saved = allBookings.find(b => 
-        b.startDate === booking.startDate && 
-        b.endDate === booking.endDate &&
-        b.guests === booking.guests
-      );
-      if (saved) {
-        console.log('✓ 预订添加成功并已验证');
-      } else {
-        console.warn('⚠️ 预订可能未保存，但请求已发送');
-      }
-    } catch (verifyError) {
-      console.warn('⚠️ 无法验证保存结果:', verifyError);
-      // 不抛出错误，因为请求已发送
-    }
+    // 等待一下确保数据已保存
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    console.log('✓ 预订添加成功');
   } catch (error) {
     console.error('❌ 添加预订失败:', error);
     throw error;
   }
 };
 
-// 更新预订（注意：用户的脚本只支持添加，不支持更新）
-// 我们通过删除旧记录并添加新记录来实现更新
+// 更新预订
 export const updateBooking = async (id: string, updated: Booking): Promise<void> => {
   checkConfig();
   
   try {
     console.log('✏️ 更新 Google Sheets 预订:', id, updated);
-    console.warn('⚠️ 注意：当前脚本不支持直接更新，将删除旧记录并添加新记录');
     
-    // 先删除旧记录
-    await deleteBooking(id);
+    // 用户的脚本期望的字段名：StartDate, EndDate, GuestsNo, Note, Color
+    const data = {
+      ID: id, // 确保 ID 也传递过去
+      StartDate: updated.startDate,
+      EndDate: updated.endDate,
+      GuestsNo: updated.guests,
+      Note: updated.note || '',
+      Color: updated.color || '',
+    };
     
-    // 等待一下
+    await callPostScript('update', data);
+    
+    // 等待一下确保数据已保存
     await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // 添加新记录
-    await addBooking(updated);
     
     console.log('✓ 预订更新成功');
   } catch (error) {
@@ -140,23 +144,17 @@ export const updateBooking = async (id: string, updated: Booking): Promise<void>
   }
 };
 
-// 删除预订（注意：用户的脚本不支持删除）
-// 我们需要获取所有数据，过滤掉要删除的，然后重新保存
+// 删除预订
 export const deleteBooking = async (id: string): Promise<void> => {
   checkConfig();
   
   try {
     console.log('🗑️ 从 Google Sheets 删除预订:', id);
-    console.warn('⚠️ 注意：当前脚本不支持直接删除，将通过重新保存所有数据来实现删除');
     
-    // 获取所有数据
-    const allBookings = await getBookings();
+    await callPostScript('delete', { ID: id }); // 传递 ID
     
-    // 过滤掉要删除的
-    const filtered = allBookings.filter(b => b.id !== id);
-    
-    // 清空并重新保存
-    await saveBookings(filtered);
+    // 等待一下确保数据已保存
+    await new Promise(resolve => setTimeout(resolve, 500));
     
     console.log('✓ 预订删除成功');
   } catch (error) {
@@ -166,15 +164,17 @@ export const deleteBooking = async (id: string): Promise<void> => {
 };
 
 // 保存所有预订（用于初始化）
-// 注意：用户的脚本不支持清空，所以这个方法会添加所有数据（可能重复）
 export const saveBookings = async (bookings: Booking[]): Promise<void> => {
   checkConfig();
   
   try {
     console.log('💾 保存', bookings.length, '个预订到 Google Sheets...');
-    console.warn('⚠️ 注意：当前脚本不支持清空，新数据会追加到现有数据后面');
     
-    // 批量添加（用户的脚本不支持清空，所以会追加）
+    // 先清空所有数据
+    await callPostScript('clearAll', {});
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // 批量添加
     for (const booking of bookings) {
       await addBooking(booking);
       // 添加延迟避免过快请求
