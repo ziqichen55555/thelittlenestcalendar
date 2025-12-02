@@ -294,14 +294,16 @@ body {
   background: white;
 }
 
+/* 开始日：右下角有颜色（因为接着明天会有颜色） */
 .split-background.booking-bg-start {
   background: var(--booking-color);
-  clip-path: polygon(0 0, 100% 0, 0 100%);
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
 }
 
+/* 结束日：左上角有颜色（因为接着上一天有颜色） */
 .split-background.booking-bg-end {
   background: var(--booking-color);
-  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+  clip-path: polygon(0 0, 100% 0, 0 100%);
 }
 
 .calendar-day.start-only .day-number,
