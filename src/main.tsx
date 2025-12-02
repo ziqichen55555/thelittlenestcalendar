@@ -75,10 +75,13 @@ window.addEventListener('load', () => {
     async: s.async,
     defer: s.defer,
   })));
-  console.log('📍 所有样式标签:', Array.from(document.querySelectorAll('link[rel="stylesheet"]')).map(l => ({
-    href: l.href,
-    rel: l.rel,
-  })));
+  console.log('📍 所有样式标签:', Array.from(document.querySelectorAll('link[rel="stylesheet"]')).map(l => {
+    const link = l as HTMLLinkElement;
+    return {
+      href: link.href,
+      rel: link.rel,
+    };
+  }));
 });
 
 // 监听错误
