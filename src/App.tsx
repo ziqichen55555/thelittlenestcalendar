@@ -2,10 +2,8 @@ import { useState, useEffect } from 'react';
 import Calendar from './components/Calendar';
 import BookingForm from './components/BookingForm';
 import BookingList from './components/BookingList';
-import SyncPanel from './components/SyncPanel';
 import { Booking } from './types';
 import { getBookings, addBooking, updateBooking, deleteBooking, saveBookings } from './utils/storage';
-import { importBookings } from './utils/cloudSync';
 
 function App() {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -14,37 +12,57 @@ function App() {
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
 
   useEffect(() => {
-    // 先加载本地数据，确保页面能正常显示
-    setBookings(getBookings());
+    const existingBookings = getBookings();
     
-    // 然后检查 URL 参数中是否有数据（用于跨设备同步）
-    // 使用 setTimeout 确保页面先渲染
-    setTimeout(() => {
-      try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const dataParam = urlParams.get('data');
-        if (dataParam && dataParam.length > 0) {
-          try {
-            const json = decodeURIComponent(atob(dataParam));
-            const importedBookings = importBookings(json);
-            if (importedBookings && importedBookings.length > 0) {
-              if (confirm(`檢測到同步數據，是否導入 ${importedBookings.length} 個預訂？`)) {
-                saveBookings(importedBookings);
-                setBookings(importedBookings);
-              }
-              // 清除 URL 参数
-              window.history.replaceState({}, '', window.location.pathname);
-            }
-          } catch (error) {
-            console.error('URL 數據解析失敗:', error);
-            // 即使解析失败，也清除 URL 参数，避免重复尝试
-            window.history.replaceState({}, '', window.location.pathname);
-          }
-        }
-      } catch (error) {
-        console.error('URL 參數處理失敗:', error);
-      }
-    }, 100);
+    // 如果已有数据，直接加载
+    if (existingBookings.length > 0) {
+      setBookings(existingBookings);
+      return;
+    }
+    
+    // 如果没有数据，插入初始数据
+    const initialBookings: Booking[] = [
+      {
+        id: '1',
+        startDate: '2024-12-03',
+        endDate: '2024-12-06',
+        guests: 1,
+        note: 'Anthony 一个人 男',
+      },
+      {
+        id: '2',
+        startDate: '2024-12-06',
+        endDate: '2024-12-07',
+        guests: 2,
+        note: 'fangfang 跟另外一个人住',
+        color: 'green',
+      },
+      {
+        id: '3',
+        startDate: '2025-01-11',
+        endDate: '2025-01-23',
+        guests: 1,
+        note: 'auxence',
+      },
+      {
+        id: '4',
+        startDate: '2025-01-26',
+        endDate: '2025-02-09',
+        guests: 1,
+        note: 'Sarah 巴黎',
+      },
+      {
+        id: '5',
+        startDate: '2025-02-10',
+        endDate: '2025-02-11',
+        guests: 2,
+        note: '法国情侣',
+        color: 'green',
+      },
+    ];
+    
+    saveBookings(initialBookings);
+    setBookings(initialBookings);
   }, []);
 
   const handleDateClick = (date: string) => {
@@ -84,11 +102,6 @@ function App() {
     setSelectedDate('');
   };
 
-  const handleImportBookings = (importedBookings: Booking[]) => {
-    saveBookings(importedBookings);
-    setBookings(importedBookings);
-  };
-
   return (
     <div className="app">
       <header className="app-header">
@@ -126,11 +139,6 @@ function App() {
             bookings={bookings}
             onEdit={handleEditBooking}
             onDelete={handleDeleteBooking}
-          />
-          
-          <SyncPanel
-            bookings={bookings}
-            onImport={handleImportBookings}
           />
         </div>
       </main>
