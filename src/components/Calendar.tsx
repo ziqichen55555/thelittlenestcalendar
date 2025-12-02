@@ -54,6 +54,16 @@ const Calendar = ({ bookings, onDateClick, selectedBooking }: CalendarProps) => 
     return bookings.find(b => isDateInRange(date, b.startDate, b.endDate)) || null;
   };
 
+  // 获取在某一天结束的预订
+  const getEndingBooking = (dateStr: string): Booking | null => {
+    return bookings.find(b => b.endDate === dateStr) || null;
+  };
+
+  // 获取在某一天开始的预订
+  const getStartingBooking = (dateStr: string): Booking | null => {
+    return bookings.find(b => b.startDate === dateStr) || null;
+  };
+
   const isDateSelected = (date: Date): boolean => {
     if (!selectedBooking) return false;
     return isDateInRange(date, selectedBooking.startDate, selectedBooking.endDate);
@@ -86,13 +96,36 @@ const Calendar = ({ bookings, onDateClick, selectedBooking }: CalendarProps) => 
       const isEnd = booking && booking.endDate === dateStr;
       const today = isToday(date);
 
+      // 检查是否是分割日（既是结束又是开始）
+      const endingBooking = getEndingBooking(dateStr);
+      const startingBooking = getStartingBooking(dateStr);
+      const isSplitDay = endingBooking && startingBooking && endingBooking.id !== startingBooking.id;
+
+      // 确定显示哪个预订（优先显示结束的预订，因为用户说"一般是上个订单的颜色"）
+      const displayBooking = isSplitDay ? endingBooking : booking;
+
       days.push(
         <div
           key={day}
-          className={`calendar-day ${booking ? 'has-booking' : ''} ${booking?.color === 'green' ? 'special-booking' : ''} ${isSelected ? 'selected' : ''} ${today ? 'today' : ''} ${isStart ? 'start' : ''} ${isEnd ? 'end' : ''}`}
+          className={`calendar-day ${displayBooking ? 'has-booking' : ''} ${displayBooking?.color === 'green' ? 'special-booking' : ''} ${isSelected ? 'selected' : ''} ${today ? 'today' : ''} ${isStart ? 'start' : ''} ${isEnd ? 'end' : ''} ${isSplitDay ? 'split-day' : ''}`}
           onClick={() => onDateClick(dateStr)}
-          title={booking ? `${booking.guests}人 - ${booking.note || '無備註'}` : ''}
+          title={displayBooking ? `${displayBooking.guests}人 - ${displayBooking.note || '無備註'}` : ''}
+          style={isSplitDay ? {
+            '--ending-color': endingBooking?.color === 'green' 
+              ? 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)' 
+              : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            '--starting-color': startingBooking?.color === 'green'
+              ? 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)'
+              : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          } as React.CSSProperties : undefined}
         >
+          {isSplitDay && (
+            <>
+              <div className="split-background ending-bg"></div>
+              <div className="split-background starting-bg"></div>
+              <div className="split-line"></div>
+            </>
+          )}
           <span className="day-number">{day}</span>
           {today && (
             <div className="weather-info">
@@ -106,9 +139,9 @@ const Calendar = ({ bookings, onDateClick, selectedBooking }: CalendarProps) => 
               )}
             </div>
           )}
-          {booking && (
+          {displayBooking && (
             <div className="booking-indicator">
-              <span className="guests-count">{booking.guests}人</span>
+              <span className="guests-count">{displayBooking.guests}人</span>
             </div>
           )}
         </div>

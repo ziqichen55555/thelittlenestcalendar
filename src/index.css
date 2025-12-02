@@ -115,7 +115,7 @@ body {
   aspect-ratio: 1;
   border: 2px solid #e0e0e0;
   border-radius: 8px;
-  padding: 8px;
+  padding: 4px;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
@@ -124,6 +124,13 @@ body {
   justify-content: flex-start;
   background: white;
   position: relative;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .calendar-day {
+    padding: 2px;
+  }
 }
 
 .calendar-day:hover {
@@ -226,6 +233,81 @@ body {
   padding: 2px 6px;
   border-radius: 10px;
   font-weight: 600;
+}
+
+/* Split Day Styles */
+.calendar-day.split-day {
+  padding: 0;
+}
+
+.split-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+}
+
+.split-background.ending-bg {
+  background: var(--ending-color);
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+
+.split-background.starting-bg {
+  background: var(--starting-color);
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+
+.split-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  background: linear-gradient(
+    to bottom right,
+    transparent 0%,
+    transparent calc(50% - 2px),
+    rgba(0, 0, 0, 0.4) calc(50% - 2px),
+    rgba(0, 0, 0, 0.4) calc(50% + 2px),
+    transparent calc(50% + 2px),
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.calendar-day.split-day .day-number,
+.calendar-day.split-day .weather-info,
+.calendar-day.split-day .booking-indicator {
+  position: relative;
+  z-index: 2;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+@media (max-width: 768px) {
+  .split-line {
+    background: linear-gradient(
+      to bottom right,
+      transparent 0%,
+      transparent calc(50% - 1.5px),
+      rgba(0, 0, 0, 0.5) calc(50% - 1.5px),
+      rgba(0, 0, 0, 0.5) calc(50% + 1.5px),
+      transparent calc(50% + 1.5px),
+      transparent 100%
+    );
+  }
+  
+  .calendar-day.split-day .day-number {
+    font-size: 0.8rem;
+  }
+  
+  .calendar-day.split-day .guests-count {
+    font-size: 0.6rem;
+    padding: 1px 4px;
+  }
 }
 
 /* Sidebar Styles */
