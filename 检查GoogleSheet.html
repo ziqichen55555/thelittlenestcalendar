@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>检查 Google Sheet 连接</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 900px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      border-bottom: 2px solid #667eea;
+      padding-bottom: 10px;
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 20px;
+      background: #f9f9f9;
+      border-radius: 4px;
+      border-left: 4px solid #667eea;
+    }
+    button {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px 5px;
+    }
+    button:hover {
+      background: #5568d3;
+    }
+    button.success {
+      background: #4CAF50;
+    }
+    button.error {
+      background: #f44336;
+    }
+    pre {
+      background: #2d2d2d;
+      color: #f8f8f2;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+      max-height: 500px;
+      overflow-y: auto;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .status {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    .status.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .status.info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    .summary {
+      margin-top: 20px;
+      padding: 20px;
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 4px;
+    }
+    .summary h3 {
+      margin-top: 0;
+      color: #856404;
+    }
+    .summary ul {
+      margin: 10px 0;
+      padding-left: 20px;
+    }
+    .summary li {
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 Google Sheet 连接检查工具</h1>
+    
+    <div class="test-section">
+      <h2>1. 基本信息</h2>
+      <p><strong>Web App URL:</strong></p>
+      <code id="url">https://script.google.com/macros/s/AKfycbxMZB7n-n6RGxlyBCCrXHM26fHNoHlf9d_M57Iw7tVZU1GQWm-m4BSvctHJeGZn2PAd/exec</code>
+    </div>
+
+    <div class="test-section">
+      <h2>2. 开始检查</h2>
+      <button onclick="runFullDiagnosis()">🚀 运行完整检查</button>
+      <button onclick="testGet()">📥 测试 GET 请求</button>
+      <button onclick="testPost()">📤 测试 POST 请求</button>
+      <button onclick="testOptions()">🔐 测试 CORS (OPTIONS)</button>
+    </div>
+
+    <div class="test-section">
+      <h2>3. 检查结果</h2>
+      <div id="status"></div>
+      <pre id="result">点击上面的按钮开始检查...</pre>
+    </div>
+
+    <div id="summary" class="summary" style="display: none;">
+      <h3>📋 检查总结</h3>
+      <ul id="summaryList"></ul>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'https://script.google.com/macros/s/AKfycbxMZB7n-n6RGxlyBCCrXHM26fHNoHlf9d_M57Iw7tVZU1GQWm-m4BSvctHJeGZn2PAd/exec';
+
+    function log(message, type = 'info') {
+      const resultEl = document.getElementById('result');
+      const timestamp = new Date().toLocaleTimeString();
+      const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️';
+      resultEl.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+      resultEl.scrollTop = resultEl.scrollHeight;
+    }
+
+    function setStatus(message, type) {
+      const statusEl = document.getElementById('status');
+      statusEl.className = `status ${type}`;
+      statusEl.textContent = message;
+    }
+
+    function showSummary(items) {
+      const summaryEl = document.getElementById('summary');
+      const listEl = document.getElementById('summaryList');
+      listEl.innerHTML = items.map(item => `<li>${item}</li>`).join('');
+      summaryEl.style.display = 'block';
+    }
+
+    async function testGet() {
+      log('开始测试 GET 请求...');
+      setStatus('正在测试...', 'info');
+      
+      try {
+        const startTime = Date.now();
+        const response = await fetch(API_URL, {
+          method: 'GET',
+        });
+        const duration = Date.now() - startTime;
+        
+        log(`响应状态: ${response.status} ${response.statusText} (耗时: ${duration}ms)`);
+        log(`响应头: ${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}`);
+        
+        const data = await response.json();
+        log(`返回数据: ${JSON.stringify(data, null, 2)}`);
+        
+        if (data.error) {
+          setStatus(`❌ 错误: ${data.error}`, 'error');
+          if (data.error === 'Sheet not found') {
+            log('💡 解决方案：在 Google Sheet 中创建名为 "thelittlenestbookings" 的工作表', 'error');
+          }
+          return { success: false, error: data.error, data };
+        } else if (Array.isArray(data)) {
+          setStatus(`✅ 成功！获取到 ${data.length} 条记录`, 'success');
+          return { success: true, count: data.length, data };
+        } else {
+          setStatus('⚠️ 返回数据格式异常', 'error');
+          return { success: false, error: '数据格式异常', data };
+        }
+      } catch (error) {
+        setStatus(`❌ 请求失败: ${error.message}`, 'error');
+        log(`错误详情: ${error.toString()}`, 'error');
+        return { success: false, error: error.message };
+      }
+    }
+
+    async function testPost() {
+      log('开始测试 POST 请求（添加数据）...');
+      setStatus('正在测试...', 'info');
+      
+      const testData = {
+        action: 'add',
+        ID: 'test-' + Date.now(),
+        StartDate: '2025-12-03',
+        EndDate: '2025-12-05',
+        GuestsNo: 2,
+        Note: '测试数据 - 可以删除',
+        Color: ''
+      };
+      
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(testData)
+        });
+        
+        log(`响应状态: ${response.status} ${response.statusText}`);
+        const data = await response.json();
+        log(`返回数据: ${JSON.stringify(data, null, 2)}`);
+        
+        if (data.status === 'success') {
+          setStatus('✅ POST 请求成功', 'success');
+          return { success: true, data };
+        } else {
+          setStatus(`❌ POST 请求失败: ${data.error || '未知错误'}`, 'error');
+          return { success: false, error: data.error, data };
+        }
+      } catch (error) {
+        setStatus(`❌ POST 请求失败: ${error.message}`, 'error');
+        log(`错误详情: ${error.toString()}`, 'error');
+        return { success: false, error: error.message };
+      }
+    }
+
+    async function testOptions() {
+      log('开始测试 OPTIONS 请求（CORS 预检）...');
+      setStatus('正在测试...', 'info');
+      
+      try {
+        const response = await fetch(API_URL, {
+          method: 'OPTIONS',
+        });
+        
+        log(`响应状态: ${response.status} ${response.statusText}`);
+        log(`响应头: ${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}`);
+        
+        if (response.status === 200 || response.status === 204) {
+          setStatus('✅ OPTIONS 请求成功（CORS 配置正确）', 'success');
+          return { success: true };
+        } else {
+          setStatus(`⚠️ OPTIONS 请求返回状态码: ${response.status}`, 'error');
+          return { success: false, status: response.status };
+        }
+      } catch (error) {
+        setStatus(`❌ OPTIONS 请求失败: ${error.message}`, 'error');
+        log(`错误详情: ${error.toString()}`, 'error');
+        return { success: false, error: error.message };
+      }
+    }
+
+    async function runFullDiagnosis() {
+      document.getElementById('result').textContent = '';
+      log('=== 开始完整诊断 ===');
+      setStatus('正在运行完整诊断...', 'info');
+      
+      const results = {
+        get: null,
+        post: null,
+        options: null
+      };
+      
+      // 1. 测试 GET
+      log('\n--- 步骤 1: 测试 GET 请求 ---');
+      results.get = await testGet();
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // 2. 测试 OPTIONS
+      log('\n--- 步骤 2: 测试 OPTIONS 请求 (CORS) ---');
+      results.options = await testOptions();
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // 3. 测试 POST（只有在 GET 成功时才测试）
+      if (results.get && results.get.success) {
+        log('\n--- 步骤 3: 测试 POST 请求 ---');
+        results.post = await testPost();
+      } else {
+        log('\n--- 步骤 3: 跳过 POST 测试（GET 失败）---');
+      }
+      
+      // 总结
+      log('\n=== 诊断完成 ===');
+      const summaryItems = [];
+      
+      if (results.get && results.get.success) {
+        summaryItems.push(`✅ GET 请求成功 - 工作表存在，有 ${results.get.count || 0} 条记录`);
+      } else {
+        summaryItems.push(`❌ GET 请求失败 - ${results.get?.error || '未知错误'}`);
+        if (results.get?.error === 'Sheet not found') {
+          summaryItems.push('💡 需要创建 "thelittlenestbookings" 工作表');
+        }
+      }
+      
+      if (results.options && results.options.success) {
+        summaryItems.push('✅ CORS 配置正确');
+      } else {
+        summaryItems.push('❌ CORS 配置可能有问题');
+      }
+      
+      if (results.post && results.post.success) {
+        summaryItems.push('✅ POST 请求成功 - 可以添加数据');
+      } else if (results.post) {
+        summaryItems.push(`❌ POST 请求失败 - ${results.post.error || '未知错误'}`);
+      }
+      
+      showSummary(summaryItems);
+      
+      if (results.get && results.get.success && results.options && results.options.success) {
+        setStatus('✅ 所有检查通过！', 'success');
+      } else {
+        setStatus('⚠️ 发现问题，请查看详情', 'error');
+      }
+    }
+
+    // 页面加载时自动运行完整诊断
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        runFullDiagnosis();
+      }, 500);
+    });
+  </script>
+</body>
+</html>
+
