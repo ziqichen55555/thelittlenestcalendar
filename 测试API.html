@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>测试 Google Apps Script API</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .test-section {
+      background: white;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 5px;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    button.danger {
+      background: #f44336;
+    }
+    button.danger:hover {
+      background: #da190b;
+    }
+    pre {
+      background: #f4f4f4;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .success {
+      color: #4CAF50;
+      font-weight: bold;
+    }
+    .error {
+      color: #f44336;
+      font-weight: bold;
+    }
+    input {
+      padding: 8px;
+      margin: 5px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      width: 200px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔍 Google Apps Script API 测试工具</h1>
+  
+  <div class="test-section">
+    <h2>1. 测试 GET 请求（获取所有数据）</h2>
+    <p>测试是否能从 Google Sheet 获取数据</p>
+    <button onclick="testGet()">测试 GET</button>
+    <pre id="getResult">点击按钮测试...</pre>
+  </div>
+
+  <div class="test-section">
+    <h2>2. 测试 POST 请求（添加数据）</h2>
+    <p>测试是否能添加数据到 Google Sheet</p>
+    <input type="date" id="startDate" value="2025-12-03">
+    <input type="date" id="endDate" value="2025-12-05">
+    <input type="number" id="guests" value="2" placeholder="人数">
+    <input type="text" id="note" value="测试数据" placeholder="备注">
+    <br><br>
+    <button onclick="testPost()">测试 POST（添加）</button>
+    <pre id="postResult">点击按钮测试...</pre>
+  </div>
+
+  <div class="test-section">
+    <h2>3. 测试 OPTIONS 请求（CORS 预检）</h2>
+    <p>测试 CORS 是否配置正确</p>
+    <button onclick="testOptions()">测试 OPTIONS</button>
+    <pre id="optionsResult">点击按钮测试...</pre>
+  </div>
+
+  <div class="test-section">
+    <h2>4. 测试完整流程</h2>
+    <p>先获取数据，然后添加一条，再获取数据验证</p>
+    <button onclick="testFullFlow()">测试完整流程</button>
+    <pre id="fullFlowResult">点击按钮测试...</pre>
+  </div>
+
+  <script>
+    const API_URL = 'https://script.google.com/macros/s/AKfycbxsJMmHKtlQwn7wqFX3T6xRP96gDM8UdJp5MoZ2Q31_RSlOZTHLTlqoEAkfB8oZecY-Jw/exec';
+
+    async function testGet() {
+      const resultEl = document.getElementById('getResult');
+      resultEl.textContent = '正在测试...';
+      
+      try {
+        const response = await fetch(API_URL, {
+          method: 'GET',
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+          resultEl.innerHTML = `<span class="error">❌ 错误: ${data.error}</span>\n\n` + JSON.stringify(data, null, 2);
+        } else if (Array.isArray(data)) {
+          resultEl.innerHTML = `<span class="success">✓ 成功！获取到 ${data.length} 条记录</span>\n\n` + JSON.stringify(data, null, 2);
+        } else {
+          resultEl.textContent = JSON.stringify(data, null, 2);
+        }
+      } catch (error) {
+        resultEl.innerHTML = `<span class="error">❌ 请求失败</span>\n\n` + error.toString();
+      }
+    }
+
+    async function testPost() {
+      const resultEl = document.getElementById('postResult');
+      resultEl.textContent = '正在测试...';
+      
+      const testData = {
+        action: 'add',
+        ID: 'test-' + Date.now(),
+        StartDate: document.getElementById('startDate').value,
+        EndDate: document.getElementById('endDate').value,
+        GuestsNo: parseInt(document.getElementById('guests').value),
+        Note: document.getElementById('note').value,
+        Color: ''
+      };
+      
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(testData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+          resultEl.innerHTML = `<span class="success">✓ 添加成功！</span>\n\n` + JSON.stringify(data, null, 2);
+        } else {
+          resultEl.innerHTML = `<span class="error">❌ 添加失败</span>\n\n` + JSON.stringify(data, null, 2);
+        }
+      } catch (error) {
+        resultEl.innerHTML = `<span class="error">❌ 请求失败</span>\n\n` + error.toString();
+      }
+    }
+
+    async function testOptions() {
+      const resultEl = document.getElementById('optionsResult');
+      resultEl.textContent = '正在测试...';
+      
+      try {
+        const response = await fetch(API_URL, {
+          method: 'OPTIONS',
+        });
+        
+        resultEl.innerHTML = `<span class="success">✓ OPTIONS 请求成功</span>\n\n` +
+          `状态码: ${response.status}\n` +
+          `状态文本: ${response.statusText}\n` +
+          `响应头:\n${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}`;
+      } catch (error) {
+        resultEl.innerHTML = `<span class="error">❌ OPTIONS 请求失败</span>\n\n` + error.toString();
+      }
+    }
+
+    async function testFullFlow() {
+      const resultEl = document.getElementById('fullFlowResult');
+      resultEl.textContent = '正在测试完整流程...\n\n';
+      
+      try {
+        // 1. 获取初始数据
+        resultEl.textContent += '1. 获取初始数据...\n';
+        const getResponse1 = await fetch(API_URL, { method: 'GET' });
+        const data1 = await getResponse1.json();
+        const initialCount = Array.isArray(data1) ? data1.length : 0;
+        resultEl.textContent += `   初始记录数: ${initialCount}\n\n`;
+        
+        // 2. 添加一条数据
+        resultEl.textContent += '2. 添加测试数据...\n';
+        const testId = 'test-' + Date.now();
+        const postResponse = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'add',
+            ID: testId,
+            StartDate: '2025-12-03',
+            EndDate: '2025-12-05',
+            GuestsNo: 2,
+            Note: '测试数据',
+            Color: ''
+          })
+        });
+        const postData = await postResponse.json();
+        if (postData.status === 'success') {
+          resultEl.textContent += `   ✓ 添加成功，ID: ${testId}\n\n`;
+        } else {
+          resultEl.textContent += `   ❌ 添加失败: ${JSON.stringify(postData)}\n\n`;
+          return;
+        }
+        
+        // 等待一下
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // 3. 再次获取数据验证
+        resultEl.textContent += '3. 验证数据是否添加成功...\n';
+        const getResponse2 = await fetch(API_URL, { method: 'GET' });
+        const data2 = await getResponse2.json();
+        const finalCount = Array.isArray(data2) ? data2.length : 0;
+        
+        if (finalCount > initialCount) {
+          resultEl.textContent += `   ✓ 验证成功！记录数从 ${initialCount} 增加到 ${finalCount}\n\n`;
+          resultEl.textContent += `完整流程测试通过！✓\n\n`;
+        } else {
+          resultEl.textContent += `   ❌ 验证失败！记录数没有增加（${initialCount} -> ${finalCount}）\n\n`;
+        }
+        
+      } catch (error) {
+        resultEl.textContent += `\n❌ 测试失败: ${error.toString()}`;
+      }
+    }
+  </script>
+</body>
+</html>
+

@@ -3,7 +3,7 @@ import { Booking } from '../types';
 // Google Apps Script Web App URL
 // 注意：使用 /exec 版本（生产版本），不是 /dev 版本
 const WEB_APP_URL = (import.meta as any).env?.VITE_GOOGLE_SCRIPT_URL || 
-  'https://script.google.com/macros/s/AKfycbzM8hLEu8u82j0VbQq4QRbbt5M56IbiJuHKlhTnNU9L/exec';
+  'https://script.google.com/macros/s/AKfycbxsJMmHKtlQwn7wqFX3T6xRP96gDM8UdJp5MoZ2Q31_RSlOZTHLTlqoEAkfB8oZecY-Jw/exec';
 
 // 检查配置
 const checkConfig = () => {
