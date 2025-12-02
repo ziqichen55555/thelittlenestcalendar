@@ -95,13 +95,17 @@ window.addEventListener('error', (event) => {
 
 // 监听资源加载错误
 window.addEventListener('error', (event) => {
-  if (event.target && (event.target as HTMLElement).tagName) {
+  if (event.target) {
     const target = event.target as HTMLElement;
-    console.error('❌ 资源加载失败:', {
-      tag: target.tagName,
-      src: (target as HTMLScriptElement).src || (target as HTMLLinkElement).href || 'N/A',
-      type: (target as HTMLScriptElement).type || (target as HTMLLinkElement).rel || 'N/A',
-    });
+    if (target.tagName) {
+      const script = target as HTMLScriptElement;
+      const link = target as HTMLLinkElement;
+      console.error('❌ 资源加载失败:', {
+        tag: target.tagName,
+        src: script.src || link.href || 'N/A',
+        type: script.type || link.rel || 'N/A',
+      });
+    }
   }
 }, true);
 
