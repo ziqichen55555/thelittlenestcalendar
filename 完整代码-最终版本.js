@@ -19,10 +19,13 @@ function doOptions() {
   Logger.log('请求方法: OPTIONS');
   
   try {
-    const result = ContentService.createTextOutput('')
-      .setMimeType(ContentService.MimeType.JSON);
+    // 对于 OPTIONS 预检请求，返回空响应
+    // 注意：Google Apps Script 会自动处理 CORS 头（如果部署设置为"所有人"）
+    const result = ContentService.createTextOutput('');
     
-    Logger.log('✅ doOptions 执行成功');
+    Logger.log('✅ doOptions 执行成功，返回空响应');
+    Logger.log('💡 注意：CORS 头由 Google Apps Script 自动处理');
+    
     return result;
   } catch (error) {
     Logger.log('❌ doOptions 执行失败: ' + error.toString());
