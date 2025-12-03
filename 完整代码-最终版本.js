@@ -21,14 +21,17 @@ function doOptions() {
   try {
     // 对于 OPTIONS 预检请求，返回空响应
     // 注意：Google Apps Script 会自动处理 CORS 头（如果部署设置为"所有人"）
-    const result = ContentService.createTextOutput('');
+    // 尝试返回不同的响应格式
+    const result = ContentService.createTextOutput('OK');
     
-    Logger.log('✅ doOptions 执行成功，返回空响应');
+    Logger.log('✅ doOptions 执行成功，返回 "OK"');
     Logger.log('💡 注意：CORS 头由 Google Apps Script 自动处理');
+    Logger.log('📝 响应内容: "OK"');
     
     return result;
   } catch (error) {
     Logger.log('❌ doOptions 执行失败: ' + error.toString());
+    Logger.log('❌ 错误堆栈: ' + error.stack);
     throw error;
   }
 }
