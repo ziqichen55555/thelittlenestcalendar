@@ -40,7 +40,7 @@ function App() {
     // 检查 Google Script URL
     // 注意：使用 /exec 版本（生产版本），不是 /dev 版本
     const scriptUrl = (import.meta as any).env?.VITE_GOOGLE_SCRIPT_URL || 
-      'https://script.google.com/macros/s/AKfycbxMZB7n-n6RGxlyBCCrXHM26fHNoHlf9d_M57Iw7tVZU1GQWm-m4BSvctHJeGZn2PAd/exec';
+      'https://script.google.com/macros/s/AKfycbz6aY83vkEBpdpO8EJOWaA4HWob6p7vnc-wyoL0Dlbd_WH5sRdeeCn7qjVsSMpro2vk/exec';
     
     console.log('📍 Google Script URL:', scriptUrl);
     console.log('📍 URL 是否有效:', !scriptUrl.includes('your-script-url'));
