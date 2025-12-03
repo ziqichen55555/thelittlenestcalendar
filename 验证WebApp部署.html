@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>验证 Web App 部署</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 900px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      border-bottom: 2px solid #667eea;
+      padding-bottom: 10px;
+    }
+    .warning {
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      border-radius: 4px;
+      padding: 15px;
+      margin: 20px 0;
+    }
+    .warning h3 {
+      margin-top: 0;
+      color: #856404;
+    }
+    button {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px 5px;
+    }
+    button:hover {
+      background: #5568d3;
+    }
+    pre {
+      background: #2d2d2d;
+      color: #f8f8f2;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+      max-height: 500px;
+      overflow-y: auto;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .status {
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+      font-weight: bold;
+      font-size: 16px;
+    }
+    .status.success {
+      background: #d4edda;
+      color: #155724;
+      border: 2px solid #c3e6cb;
+    }
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 2px solid #f5c6cb;
+    }
+    .status.info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 2px solid #bee5eb;
+    }
+    .step {
+      background: #f9f9f9;
+      border-left: 4px solid #667eea;
+      padding: 15px;
+      margin: 15px 0;
+    }
+    .step h3 {
+      margin-top: 0;
+    }
+    code {
+      background: #f4f4f4;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 验证 Web App 部署</h1>
+    
+    <div class="warning">
+      <h3>⚠️ 重要提示</h3>
+      <p>如果你的代码中已经有 <code>doOptions</code> 函数，但测试仍然失败，可能的原因：</p>
+      <ol>
+        <li><strong>部署版本未更新</strong>：部署时选择了 "Head" 而不是 "新版本"</li>
+        <li><strong>链接到错误的项目</strong>：有多个 Google Apps Script 项目，Web App URL 指向了错误的项目</li>
+        <li><strong>Web App URL 错误</strong>：应用使用的 URL 不是最新部署的 URL</li>
+      </ol>
+    </div>
+
+    <div>
+      <h2>当前使用的 Web App URL</h2>
+      <p>应用代码中配置的 URL：</p>
+      <code id="currentUrl">https://script.google.com/macros/s/AKfycbxMZB7n-n6RGxlyBCCrXHM26fHNoHlf9d_M57Iw7tVZU1GQWm-m4BSvctHJeGZn2PAd/exec</code>
+    </div>
+
+    <div style="margin: 20px 0;">
+      <button onclick="verifyDeployment()">🚀 验证当前部署</button>
+      <button onclick="testAll()">🔄 完整测试</button>
+    </div>
+
+    <div id="status" class="status info" style="display: none;"></div>
+    
+    <div>
+      <h2>验证结果</h2>
+      <pre id="result">点击上面的按钮开始验证...</pre>
+    </div>
+
+    <div id="instructions" style="display: none;">
+      <h2>📋 修复步骤</h2>
+      <div id="steps"></div>
+    </div>
+  </div>
+
+  <script>
+    // 从应用代码中获取当前使用的 URL
+    // 注意：这个 URL 应该与应用代码中的 URL 一致
+    const API_URL = 'https://script.google.com/macros/s/AKfycbxMZB7n-n6RGxlyBCCrXHM26fHNoHlf9d_M57Iw7tVZU1GQWm-m4BSvctHJeGZn2PAd/exec';
+    
+    // 显示当前 URL
+    document.getElementById('currentUrl').textContent = API_URL;
+
+    function log(message, type = 'info') {
+      const resultEl = document.getElementById('result');
+      const timestamp = new Date().toLocaleTimeString();
+      const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️';
+      resultEl.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+      resultEl.scrollTop = resultEl.scrollHeight;
+    }
+
+    function setStatus(message, type) {
+      const statusEl = document.getElementById('status');
+      statusEl.className = `status ${type}`;
+      statusEl.textContent = message;
+      statusEl.style.display = 'block';
+    }
+
+    function showInstructions(steps) {
+      const instructionsEl = document.getElementById('instructions');
+      const stepsEl = document.getElementById('steps');
+      stepsEl.innerHTML = steps.map((step, index) => 
+        `<div class="step">
+          <h3>步骤 ${index + 1}: ${step.title}</h3>
+          <p>${step.content}</p>
+        </div>`
+      ).join('');
+      instructionsEl.style.display = 'block';
+    }
+
+    async function verifyDeployment() {
+      document.getElementById('result').textContent = '';
+      log('=== 开始验证 Web App 部署 ===');
+      setStatus('正在验证...', 'info');
+      
+      const results = {
+        get: null,
+        options: null,
+        post: null
+      };
+
+      // 1. 测试 GET
+      log('\n--- 测试 1: GET 请求 ---');
+      try {
+        const response = await fetch(API_URL, { method: 'GET' });
+        const data = await response.json();
+        if (data.error) {
+          log(`❌ GET 失败: ${data.error}`, 'error');
+          results.get = { success: false, error: data.error };
+        } else {
+          log(`✅ GET 成功: 获取到 ${Array.isArray(data) ? data.length : 0} 条记录`, 'success');
+          results.get = { success: true, count: Array.isArray(data) ? data.length : 0 };
+        }
+      } catch (error) {
+        log(`❌ GET 失败: ${error.message}`, 'error');
+        results.get = { success: false, error: error.message };
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // 2. 测试 OPTIONS
+      log('\n--- 测试 2: OPTIONS 请求（CORS 预检）---');
+      try {
+        const response = await fetch(API_URL, { method: 'OPTIONS' });
+        log(`响应状态: ${response.status} ${response.statusText}`);
+        if (response.status === 200 || response.status === 204) {
+          log('✅ OPTIONS 成功: doOptions 函数已正确部署', 'success');
+          results.options = { success: true, status: response.status };
+        } else {
+          log(`❌ OPTIONS 失败: 状态码 ${response.status}`, 'error');
+          log('💡 这说明 doOptions 函数未正确部署', 'error');
+          results.options = { success: false, status: response.status };
+        }
+      } catch (error) {
+        log(`❌ OPTIONS 失败: ${error.message}`, 'error');
+        log('💡 这是 CORS 错误，说明 doOptions 函数未正确部署', 'error');
+        results.options = { success: false, error: error.message };
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // 3. 测试 POST（只有在 OPTIONS 成功时才测试）
+      if (results.options && results.options.success) {
+        log('\n--- 测试 3: POST 请求 ---');
+        try {
+          const testData = {
+            action: 'add',
+            ID: 'verify-' + Date.now(),
+            StartDate: '2025-12-03',
+            EndDate: '2025-12-05',
+            GuestsNo: 1,
+            Note: '验证测试 - 可以删除',
+            Color: ''
+          };
+          const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(testData)
+          });
+          const data = await response.json();
+          if (data.status === 'success') {
+            log('✅ POST 成功: 数据已添加', 'success');
+            results.post = { success: true };
+          } else {
+            log(`❌ POST 失败: ${data.error || '未知错误'}`, 'error');
+            results.post = { success: false, error: data.error };
+          }
+        } catch (error) {
+          log(`❌ POST 失败: ${error.message}`, 'error');
+          results.post = { success: false, error: error.message };
+        }
+      } else {
+        log('\n--- 测试 3: POST 请求（跳过，因为 OPTIONS 失败）---');
+        log('💡 POST 请求需要 OPTIONS 预检成功才能工作', 'error');
+      }
+
+      // 总结
+      log('\n=== 验证完成 ===');
+      
+      if (results.options && results.options.success && results.post && results.post.success) {
+        setStatus('✅ 所有测试通过！Web App 部署正确', 'success');
+        log('✅ 你的 Web App 已正确部署，包含 doOptions 函数', 'success');
+        log('✅ 应用应该可以正常添加/更新/删除预订了', 'success');
+      } else if (results.options && !results.options.success) {
+        setStatus('❌ OPTIONS 请求失败，需要重新部署', 'error');
+        log('', 'error');
+        log('📖 问题诊断：', 'error');
+        log('   你的代码中可能有 doOptions 函数，但部署版本未更新', 'error');
+        log('   或者 Web App URL 指向了错误的项目', 'error');
+        log('', 'error');
+        
+        const steps = [
+          {
+            title: '确认 Google Apps Script 项目',
+            content: `1. 打开 Google Apps Script: https://script.google.com/<br>
+                       2. 确认你正在编辑的项目是否包含 doOptions 函数<br>
+                       3. 检查是否有多个项目，确认哪个项目链接到了你的 Google Sheet`
+          },
+          {
+            title: '重新部署 Web App（关键！）',
+            content: `1. 在 Google Apps Script 中，点击 "部署" → "管理部署"<br>
+                       2. 找到你的 Web App 部署，点击 "编辑"（铅笔图标）<br>
+                       3. <strong>重要：</strong>在 "版本" 下拉菜单中，<strong>必须选择 "新版本"</strong>（不要选择 "Head"）<br>
+                       4. 确认 "具有访问权限的用户" 设置为 "所有人"<br>
+                       5. 点击 "部署" 按钮<br>
+                       6. 等待部署完成`
+          },
+          {
+            title: '获取新的 Web App URL',
+            content: `1. 部署完成后，在 "管理部署" 页面找到 "Web app" 部分<br>
+                       2. 复制新的 "URL"（应该以 /exec 结尾）<br>
+                       3. 如果 URL 有变化，需要更新应用代码中的 URL`
+          },
+          {
+            title: '验证部署',
+            content: `1. 等待 10-20 秒让部署生效<br>
+                       2. 刷新这个页面，重新运行验证<br>
+                       3. 如果 OPTIONS 和 POST 都成功，说明问题已解决`
+          }
+        ];
+        showInstructions(steps);
+      } else {
+        setStatus('⚠️ 部分测试失败，请查看详情', 'error');
+      }
+    }
+
+    async function testAll() {
+      await verifyDeployment();
+    }
+
+    // 页面加载时自动运行验证
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        verifyDeployment();
+      }, 500);
+    });
+  </script>
+</body>
+</html>
+
