@@ -81,9 +81,9 @@ export const getBookings = async (): Promise<Booking[]> => {
     
     const bookings = Array.isArray(data) ? data.map((item: any) => {
       return {
-        id: item.id || item.ID || String(item.id),
-        startDate: item.startDate || item.start_date || '',
-        endDate: item.endDate || item.end_date || '',
+        id: String(item.id || item.ID || ''),
+        startDate: item.startDate || item.start_date || item.startdate || '',
+        endDate: item.endDate || item.end_date || item.enddate || '',
         guests: item.guests || item.guestsNo || item.guests_no || 1,
         note: item.note || '',
         color: item.color || undefined,
@@ -114,6 +114,7 @@ export const addBooking = async (booking: Booking): Promise<void> => {
   try {
     console.log('➕ 添加预订到 Supabase:', booking);
     
+    // Supabase 使用 snake_case，但我们也支持 camelCase
     const data = {
       id: booking.id,
       startDate: booking.startDate,
