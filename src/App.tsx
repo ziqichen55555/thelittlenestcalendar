@@ -9,8 +9,8 @@ import {
   updateBooking,
   deleteBooking,
   subscribeToBookings,
-  diagnoseGoogleSheet
-} from './utils/googleSheetsStorage';
+  diagnoseSupabase
+} from './utils/supabaseStorage';
 
 function App() {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -35,19 +35,26 @@ function App() {
       PROD: (import.meta as any).env?.PROD,
       DEV: (import.meta as any).env?.DEV,
     });
-    console.log('=== 📡 App: 连接 Google Sheets 云端存储 ===');
+    console.log('=== 📡 App: 连接 Supabase 云端存储 ===');
     
-    // 检查 Google Script URL
-    // 注意：使用 /exec 版本（生产版本），不是 /dev 版本
-    const scriptUrl = (import.meta as any).env?.VITE_GOOGLE_SCRIPT_URL || 
-      'https://script.google.com/macros/s/AKfycbz6aY83vkEBpdpO8EJOWaA4HWob6p7vnc-wyoL0Dlbd_WH5sRdeeCn7qjVsSMpro2vk/exec';
+    // 检查 Supabase 配置
+    const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL || 
+      'https://ivsokmmynbxguukzukvv.supabase.co';
+    const supabaseKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || '';
     
-    console.log('📍 Google Script URL:', scriptUrl);
-    console.log('📍 URL 是否有效:', !scriptUrl.includes('your-script-url'));
+    console.log('📍 Supabase URL:', supabaseUrl);
+    console.log('📍 Supabase Key 是否设置:', !!supabaseKey && !supabaseKey.includes('your-anon-key'));
     
-    if (!scriptUrl || scriptUrl.includes('your-script-url')) {
-      console.error('❌ Google Script URL 未设置！');
-      setError('⚠️ 请设置 Google Apps Script Web App URL。在项目根目录创建 .env 文件，添加 VITE_GOOGLE_SCRIPT_URL。查看 GOOGLE_SHEETS_SETUP.md 了解详细步骤。');
+    if (!supabaseUrl || supabaseUrl.includes('your-supabase-url')) {
+      console.error('❌ Supabase URL 未设置！');
+      setError('⚠️ 请设置 Supabase URL。在项目根目录创建 .env 文件，添加 VITE_SUPABASE_URL。查看 SUPABASE_SETUP.md 了解详细步骤。');
+      setIsLoading(false);
+      return;
+    }
+    
+    if (!supabaseKey || supabaseKey.includes('your-anon-key')) {
+      console.error('❌ Supabase Anon Key 未设置！');
+      setError('⚠️ 请设置 Supabase Anon Key。在项目根目录创建 .env 文件，添加 VITE_SUPABASE_ANON_KEY。查看 SUPABASE_SETUP.md 了解详细步骤。');
       setIsLoading(false);
       return;
     }
@@ -85,11 +92,13 @@ function App() {
         setIsLoading(false);
         const errorMessage = error instanceof Error ? error.message : String(error);
         
-        // 如果是 "Sheet not found" 错误，显示更详细的提示
-        if (errorMessage.includes('Sheet not found') || errorMessage.includes('工作表未找到')) {
-          setError(`❌ 工作表未找到\n\n请在 Google Sheet 中创建名为 "thelittlenestbookings" 的工作表。\n\n详细步骤：\n1. 打开 Google Sheet\n2. 点击底部 "+" 创建新工作表\n3. 重命名为 "thelittlenestbookings"\n4. 在第一行添加表头：ID | StartDate | EndDate | GuestsNo | Note | Color`);
+        // 如果是表不存在错误，显示更详细的提示
+        if (errorMessage.includes('404') || errorMessage.includes('表') || errorMessage.includes('table')) {
+          setError(`❌ 表不存在\n\n请在 Supabase 中创建 "bookings" 表。\n\n详细步骤请查看：SUPABASE_SETUP.md`);
+        } else if (errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
+          setError(`❌ 认证失败\n\n请检查 Supabase Anon Key 是否正确。\n\n详细步骤请查看：SUPABASE_SETUP.md`);
         } else {
-          setError(`连接数据库失败: ${errorMessage}. 请检查 Google Apps Script 配置。`);
+          setError(`连接数据库失败: ${errorMessage}. 请检查 Supabase 配置。`);
         }
       });
     
@@ -128,7 +137,7 @@ function App() {
       // 提供更友好的错误提示
       let userMessage = `❌ 保存失败: ${errorMessage}`;
       if (errorMessage.includes('Load failed') || errorMessage.includes('Failed to fetch')) {
-        userMessage += '\n\n可能的原因：\n1. 网络连接问题\n2. Google Apps Script 配置问题\n3. CORS 权限问题\n\n请检查：\n- 网络连接是否正常\n- Google Apps Script Web App 是否已正确部署\n- Web App 的访问权限是否设置为"所有人"';
+        userMessage += '\n\n可能的原因：\n1. 网络连接问题\n2. Supabase 配置问题\n3. 表结构不正确\n\n请检查：\n- 网络连接是否正常\n- Supabase URL 和 Anon Key 是否正确\n- bookings 表是否存在';
       }
       
       alert(userMessage);
@@ -156,7 +165,7 @@ function App() {
         // 提供更友好的错误提示
         let userMessage = `❌ 删除失败: ${errorMessage}`;
         if (errorMessage.includes('网络连接失败') || errorMessage.includes('Load failed') || errorMessage.includes('Failed to fetch')) {
-          userMessage += '\n\n可能的原因：\n1. 网络连接问题\n2. Google Apps Script 不支持 delete action\n3. 请检查浏览器控制台的详细错误信息\n\n解决方案：\n- 确保 Google Apps Script 已更新为支持 delete action（查看 更新GoogleScript.md）\n- 检查网络连接\n- 查看浏览器控制台获取详细错误';
+          userMessage += '\n\n可能的原因：\n1. 网络连接问题\n2. Supabase 配置问题\n3. 表结构不正确\n\n解决方案：\n- 检查网络连接\n- 确认 Supabase URL 和 Anon Key 正确\n- 查看浏览器控制台获取详细错误';
         }
         
         alert(userMessage);
@@ -201,23 +210,22 @@ function App() {
             </div>
             <button
               onClick={async () => {
-                console.log('🔍 开始诊断 Google Sheet...');
-                const diagnosis = await diagnoseGoogleSheet();
+                console.log('🔍 开始诊断 Supabase...');
+                const diagnosis = await diagnoseSupabase();
                 console.log('📊 诊断结果:', diagnosis);
                 
-                if (diagnosis.success) {
-                  alert(`✅ 诊断成功！\n\n工作表存在：是\n有数据：${diagnosis.hasData ? '是' : '否'}\n记录数：${diagnosis.recordCount}\n\n请刷新页面查看数据。`);
+                if (diagnosis.apiAccessible && diagnosis.tableExists) {
+                  alert(`✅ 诊断成功！\n\nAPI 可访问：是\n表存在：是\n记录数：${diagnosis.recordCount}\n\n请刷新页面查看数据。`);
                   window.location.reload();
                 } else {
                   let message = `❌ 诊断失败\n\n`;
                   message += `URL: ${diagnosis.url}\n`;
-                  message += `状态码: ${diagnosis.status}\n`;
+                  message += `API 可访问：${diagnosis.apiAccessible ? '是' : '否'}\n`;
+                  message += `表存在：${diagnosis.tableExists ? '是' : '否'}\n`;
                   if (diagnosis.error) {
                     message += `错误: ${diagnosis.error}\n`;
                   }
-                  if (diagnosis.error === 'Sheet not found') {
-                    message += `\n💡 解决方案：\n1. 在 Google Sheet 中创建名为 "thelittlenestbookings" 的工作表\n2. 在第一行添加表头：ID | StartDate | EndDate | GuestsNo | Note | Color`;
-                  }
+                  message += `\n💡 解决方案：\n1. 在 Supabase 中创建 "bookings" 表\n2. 查看 SUPABASE_SETUP.md 了解详细步骤`;
                   alert(message);
                 }
               }}
@@ -231,7 +239,7 @@ function App() {
                 fontSize: '14px'
               }}
             >
-              🔍 诊断 Google Sheet 连接
+              🔍 诊断 Supabase 连接
             </button>
           </div>
         )}
