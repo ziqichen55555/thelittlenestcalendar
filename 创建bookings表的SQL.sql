@@ -4,10 +4,11 @@
 -- 在 Supabase SQL Editor 中运行此脚本
 
 -- 创建表
+-- 注意：使用双引号括起 camelCase 列名
 CREATE TABLE IF NOT EXISTS bookings (
   id TEXT PRIMARY KEY,
-  startDate TEXT NOT NULL,
-  endDate TEXT NOT NULL,
+  "startDate" TEXT NOT NULL,
+  "endDate" TEXT NOT NULL,
   guests INTEGER NOT NULL DEFAULT 1,
   note TEXT DEFAULT '',
   color TEXT,
@@ -49,8 +50,8 @@ FOR DELETE
 USING (true);
 
 -- 创建索引（可选，提高查询性能）
-CREATE INDEX IF NOT EXISTS idx_bookings_start_date ON bookings(startDate);
-CREATE INDEX IF NOT EXISTS idx_bookings_end_date ON bookings(endDate);
+CREATE INDEX IF NOT EXISTS idx_bookings_start_date ON bookings("startDate");
+CREATE INDEX IF NOT EXISTS idx_bookings_end_date ON bookings("endDate");
 
 -- 验证表已创建
 SELECT * FROM bookings LIMIT 1;
